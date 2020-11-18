@@ -95,6 +95,7 @@ static void FS_FactroyValue(void)
 	Fs.Interval = 120;
 	Fs.HaveSetApn = 0;
 	Fs.Sensor = 4;
+	Fs.FotaSwitch = 0x01;
 	Flag.HaveGetMccMnc = 0;
 }
 
@@ -190,6 +191,6 @@ void FS_UpdateValue(void)
 	{
 		Fs_len = Fs_len/8 + 1;
 	}
-
+	printf("Updata the Fs value\r\n");
 	STMFLASH_WriteFs(FLASH_SAVE_ADDR, (u64 *)&Fs, Fs_len);
 }

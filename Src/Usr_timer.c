@@ -11,8 +11,10 @@ unsigned int Timestamp;		//unix时间（时间戳）
 unsigned char ResetLeftCnt; //该变量为重启设备倒计时。被赋值之后递减，为0时重启模块。需要延时重启时使用，例如更新Fs数据后需要重启
 unsigned int AtDelayCnt; 	//AT指令发送成功后延时多久发送下一条指令，通常AT指令处理处理完成后会清零该位，取消等待
 unsigned short IntervalTemp; //用来暂存定时上传时间间隔
+unsigned char WaitRestart;		//等待一段时间后重启，用于某些时候需要先发送GPRS数据后再重启
 
 unsigned char AT_CBC_IntervalTemp; 	//电池电量采样间隔
+unsigned char WaitEnterTest;		//开机等待进入测试模式时间窗口，在该时间窗口内，等待外部应答后进入测试模式
 
 const unsigned char arr_nDays[12] = 	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 const unsigned char Leap_month_day[12]=	{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}; //闰年 
@@ -131,6 +133,20 @@ void TIMER_SecCntHandle(void)
 		}
 	}
 
+	if(WaitEnterTest > 0)
+	{
+		WaitEnterTest --; 
+		Flag.NeedSendAskTest = 1;
+	}
+
+	if(WaitRestart > 0)
+	{
+		WaitRestart --;
+		if(WaitRestart == 0)
+		{
+			Flag.NeedDeviceRst = 1;
+		}
+	}
 
 	if((baseTimeSec % 30 == 0) && (Flag.InCharging == 0))
 	{

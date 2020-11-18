@@ -76,7 +76,10 @@ void UART_CO2Init(void)
 
 void Debug_Receive(void)
 {
-
+	if((WaitEnterTest > 0) && (strstr(Uart3Buf, "AT^NOTE=0")))
+	{
+		Flag.Insleeping = 1;
+	}
 }
 
 void UART_DebugInit(void)
@@ -101,7 +104,6 @@ void UART_BleInit(void)
 
 void At_Receive(void)
 {
-	char *p0 = NULL;
 	//有时在AT无应答时，发送指令后，模块会返回0x0D这一个无意义的数，需要过滤掉
 	if(strlen(Uart1Buf) >= 2)
 	{
@@ -111,6 +113,7 @@ void At_Receive(void)
 	printf("\r\n[%d-%d-%d %d:%d:%d]", Rtc.year, Rtc.mon, Rtc.day, Rtc.hour, Rtc.min, Rtc.sec);
 	printf("\r\nmsg from AT port (len:%d):\r\n", strlen(Uart1Buf));
 	printf("%s", Uart1Buf);
+
 
 
 	if (Flag.AtInitCmd)
@@ -176,7 +179,7 @@ void At_Receive(void)
 	//http下载升级文件结果上报
 	if (strstr(Uart1Buf, "+HTTPTOFS:"))
 	{
-		if((p0 = strstr(Uart1Buf, "+HTTPTOFS: 200,")) != NULL)
+		if(strstr(Uart1Buf, "+HTTPTOFS: 200,") != NULL)
 		{
 			UpgInfo.AppDownloadOk = 1;			//数据接收成功，准备提取数据
 		}
@@ -185,27 +188,27 @@ void At_Receive(void)
 			FsUpg.UpgNeedSendGprs = 1;			//数据接收错误，需要返回错误内容
 			UpgInfo.UpgrateFail = 1;
 
-			if((p0 = strstr(Uart1Buf, "+HTTPTOFS: 400")) != NULL)
+			if(strstr(Uart1Buf, "+HTTPTOFS: 400") != NULL)
 			{
 				strcpy(FsUpg.HttpError,"Bad Request");
 			}
-			else if((p0 = strstr(Uart1Buf, "+HTTPTOFS: 404")) != NULL)
+			else if(strstr(Uart1Buf, "+HTTPTOFS: 404") != NULL)
 			{
 				strcpy(FsUpg.HttpError,"Not Found");
 			}
-			else if((p0 = strstr(Uart1Buf, "+HTTPTOFS: 408")) != NULL)
+			else if(strstr(Uart1Buf, "+HTTPTOFS: 408") != NULL)
 			{
 				strcpy(FsUpg.HttpError,"Request Time-out");
 			}
-			else if((p0 = strstr(Uart1Buf, "+HTTPTOFS: 500")) != NULL)
+			else if(strstr(Uart1Buf, "+HTTPTOFS: 500") != NULL)
 			{
 				strcpy(FsUpg.HttpError,"Internal Server Error");
 			}		
-			else if((p0 = strstr(Uart1Buf, "+HTTPTOFS: 600")) != NULL)
+			else if(strstr(Uart1Buf, "+HTTPTOFS: 600") != NULL)
 			{
 				strcpy(FsUpg.HttpError,"Not HTTP PDU");
 			}	
-			else if((p0 = strstr(Uart1Buf, "+HTTPTOFS: 601")) != NULL)
+			else if(strstr(Uart1Buf, "+HTTPTOFS: 601") != NULL)
 			{
 				strcpy(FsUpg.HttpError,"Network Error");
 				UpgInfo.RetryWaitCnt = 30;
@@ -228,6 +231,12 @@ void At_Receive(void)
 void UART_Handle(void)
 {
 	static u8 i = 0;
+
+	if(Flag.NeedSendAskTest)
+	{
+		Flag.NeedSendAskTest = 0;
+		UART_Send(USART3,"^NOTE@T0=?\r\n",12);
+	}
 
 	if (Flag.Uart1HaveData && !Uart1RecCnt)
 	{

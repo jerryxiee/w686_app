@@ -36,7 +36,7 @@ typedef struct{
 	unsigned short  BkSendCnt;          //已发断点计数
 	unsigned int  	BkSendLen;          //已发断点字长计数，单位byte
 	unsigned short  Interval;           //定位包上传间隔	
-
+	unsigned char 	FotaSwitch;			//远程升级开关，0xAA为关闭远程升级，其他为开启远程升级
 }FS;
 #endif
 

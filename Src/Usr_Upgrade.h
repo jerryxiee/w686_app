@@ -23,11 +23,11 @@ typedef struct{
 #ifndef _UPG_INFO
 #define _UPG_INFO
 typedef struct{
-	unsigned char 	AppReadComplete:1;	//文件已经读取完成
-	unsigned char 	UpgrateFail:1;		//远程升级动作失败
+	unsigned char 	AppReadComplete:1;			//文件已经读取完成
+	unsigned char 	UpgrateFail:1;				//远程升级动作失败
 	unsigned char 	NeedCheckUploadState:1;		//下载文件过程中需要周期性查询下载状态
-	unsigned char 	NeedUpdata:1;		//开始远程升级
-	unsigned char 	NeedDiscontHttp:1;	//需要断开HTTP连接
+	unsigned char 	NeedUpdata:1;				//开始远程升级
+	unsigned char 	NeedDiscontHttp:1;			//需要断开HTTP连接
 
 	unsigned char 	AppDownloadOk;		//文件已经成功下载完成
 	unsigned short 	UpgPacketNums;

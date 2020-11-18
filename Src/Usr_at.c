@@ -1,6 +1,6 @@
 #include "usr_main.h"
 
-#define USR_TEST_PLAM		0		//使用测试服
+#define USR_TEST_PLAM		1		//使用测试服
 
 AT_TYPE AtType; 					//给AtType赋值的函数要在没有AT指令通信时调用，
 									//赋值语句后要有break或return,以免影响同函数其它对AtType的赋值
@@ -1510,8 +1510,8 @@ void Flag_check(void)
 		return;
 	}
 
-
-	if((UpgInfo.NeedUpdata)&&(Flag.IsContextAct))
+	//网络激活状态，并且已经给服务器应答开始升级指令，可以开始升级
+	if((UpgInfo.NeedUpdata)&&(Flag.IsContextAct)&&(!Flag.NeedResponseFrist))
 	{
 		UpgInfo.NeedUpdata = 0;
 		AtType = AT_HTTPTOFS;

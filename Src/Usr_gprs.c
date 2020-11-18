@@ -14,7 +14,7 @@ char CCID[21];
 char AtSendbuf[SCIBUFLEN]; /*定义一个数组存储发送数据*/
 char GprsContent[GPRSCONTLEN];
 char IMEI[16];
-
+char RespServiceBuf[100];		//用于应答平台的内容
 int Usr_Atoi(char *pSrc)
 {
 	signed int i = 0;
@@ -393,6 +393,13 @@ u16 Mqtt_SendPacket(GPRS_TYPE switch_tmp)
 				IMEI, GprsContent, IMEI, IMEI);
 		break;
 
+		case RESPONSE:
+
+		sprintf(GprsSendBuf,
+				"{\"to\":\"IoT/imei:%s/default\",\"op\":1,\"pc\":{\"m2m:cin\":{\"con\":{%s}}},\
+\"fr\":\"IoT/imei:%s\",\"rqi\":\"imei:%s_20200623185648_001\",\"ty\":4,\"rt\":2}",
+				IMEI, RespServiceBuf, IMEI, IMEI);	
+		break;
 	default:
 		break;
 	}
@@ -442,6 +449,15 @@ void GPRS_Send_Handle(void)
 		GprsType = UPGRESULT;
 		Flag.NeedSendUpgResult = 0;	
 		return;	
+	}
+
+	if(Flag.NeedSendResponse)
+	{
+		AtType = AT_SMPUB;
+		GprsType = RESPONSE;
+		Flag.NeedSendResponse = 0;	
+		Flag.NeedResponseFrist = 0;
+		return;			
 	}
 }
 
@@ -537,11 +553,24 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 		p1 = strstr(p0,"}}");
 		if(p1 != NULL)
 		{
+			Flag.NeedSendResponse = 1;
+			memset(RespServiceBuf,0,sizeof(RespServiceBuf));
+
 			strncpy(gprs_content, p0, p1 - p0 - 1);
 			printf("\r\nRecvice the data form service: %s\r\n",gprs_content);
 			//远程升级：c18:4-W686IB_V0.0.1.bin-9caf17aecfcf907bc85ad1c187cb255b
 			if(p0 == strstr(p0,"c18"))
 			{
+				Flag.NeedSendResponse = 0;		//这里使用远程升级结果回复，不需要通用结果重复回复
+
+				if(Fs.FotaSwitch == 0xAA)		//如果不允许远程升级，上报服务器
+				{
+					printf("FOTA Switch off,Not updata the device!\r\n");
+					UpgInfo.UpgrateFail = 1;
+					strcpy(FsUpg.HttpError,"Fota switch off,Upgrade failed");
+					return;
+				}
+
 				p0 = strstr(p0,"-");
 				p0 ++;
 				p1 = strstr(p0,"-");
@@ -550,28 +579,130 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 				strcpy(FsUpg.AppFilePath,"/fw/");
 				strncat(FsUpg.AppFilePath,p0,p1 - p0);
 				
-				#if 1
+				#if 1			//判断升级文件名的合法性，避免升级文件错误
 				if((memcmp(p0,"W686",4) !=0 )||(strstr(FsUpg.AppFilePath,".bin") == NULL))
 				{
 					printf("Illegal file name!\r\n");
+					UpgInfo.UpgrateFail = 1;
+					strcpy(FsUpg.HttpError,"Illegal file name!");
 					return;
 				}
 				#endif
+
 				printf("Need upgrade the device,upgrade file name is: %s",FsUpg.AppFilePath);
+				sprintf(RespServiceBuf,"Fota file name is :%s,ready upgrade...",FsUpg.AppFilePath);
+
+				//提取MD5校验
 				p0 = p1 + 1;
 				memset(Md5FileAsc,0,sizeof(Md5FileAsc));
 				memcpy(Md5FileAsc,p0,32);
 
+				//设置升级服务器域名和端口
 				memset(FsUpg.AppIpAdress,0,sizeof(FsUpg.AppIpAdress));
 				strcpy(FsUpg.AppIpAdress,"http://stg-fota.mamosearch.com:80");
-				MD5Init(&Upgmd5);  
-				UpgInfo.NeedUpdata = 1;
-				UpgInfo.RetryCnt = 2;
+
+				MD5Init(&Upgmd5);  					//初始化MD5
+
+				UpgInfo.NeedUpdata = 1;				//需要开始升级
+				Flag.NeedResponseFrist = 1;			//需要首先应答平台消息后在开始升级
+				UpgInfo.RetryCnt = 2;				//升级失败重复次数
+			}
+			//设置FOTA升级允许
+			else if(p0 == strstr(p0,"c17"))
+			{
+				p0 += 4;
+				if(*p0 == '1')				//开启FOTA
+				{
+					Fs.FotaSwitch = 0x01;
+					Flag.NeedUpdateFs = 1;
+					strcpy(RespServiceBuf,"Fota open");
+				}
+				else if(*p0 == '0')
+				{
+					Fs.FotaSwitch = 0xAA;
+					Flag.NeedUpdateFs = 1;		
+					strcpy(RespServiceBuf,"Fota close");			
+				}
+				else
+				{
+					printf("\r\nc17 data format incorrect!\r\n");
+					strcpy(RespServiceBuf,"c17 data format error!");	
+				}
+			}
+			//重启和关机命令
+			else if(p0 == strstr(p0,"c8"))
+			{
+				p0 += 3;
+				if(*p0 == '1')			
+				{
+					Flag.NeedDeviceRst = 1;
+					Flag.NeedResponseFrist = 1;	
+					strcpy(RespServiceBuf,"Ready restart device");
+				}
+				else if(*p0 == '0')
+				{
+					Flag.NeedShutDown = 1;	
+					Flag.NeedResponseFrist = 1;		
+					strcpy(RespServiceBuf,"Ready power off device");		
+				}
+				else
+				{
+					printf("\r\nc8 data format incorrect!\r\n");
+					strcpy(RespServiceBuf,"c8 data format incorrect!");	
+				}
+			}
+			//修改上传时间间隔
+			else if(p0 == strstr(p0,"c4"))
+			{
+				p0 += 3;
+				p1 = strstr(p0,"\"}}");
+
+				if(p1 - p0 <= 7)				//开启FOTA
+				{
+					Fs.Interval = Ascii2BCD_u16(p0, p1-p0);
+					if(Fs.Interval < 5)
+					{
+						strcpy(RespServiceBuf,"c4 data format incorrect!");
+						return;
+					}
+					IntervalTemp = Fs.Interval;
+					Flag.NeedUpdateFs = 1;	
+					sprintf(RespServiceBuf,"Change interval to %ds",Fs.Interval);
+				}
+				else
+				{
+					printf("\r\nc4 data format incorrect!\r\n");
+					strcpy(RespServiceBuf,"c4 data format incorrect!");	
+				}
+			}
+
+			//恢复出厂设置
+			else if(p0 == strstr(p0,"c23"))
+			{
+				p0 += 4;
+				if(*p0 == '1')				//开启FOTA
+				{
+					Flag.NeedClrValueFile = 1;
+					Flag.NeedResponseFrist = 1;	
+					strcpy(RespServiceBuf,"set the parametert to factory");
+				}
+				else if(*p0 == '0')
+				{
+					Flag.NeedShutDown = 1;	
+					Flag.NeedResponseFrist = 1;		
+					strcpy(RespServiceBuf,"Ready power off device");		
+				}
+				else
+				{
+					printf("\r\nc8 data format incorrect!\r\n");
+					strcpy(RespServiceBuf,"c8 data format incorrect!");	
+				}
 			}
 		}
 		else
 		{
 			printf("\r\nRecvice data format incorrect!\r\n");
+			strcpy(RespServiceBuf,"Parameter format incorrect!");	
 			return;
 		}
 	}

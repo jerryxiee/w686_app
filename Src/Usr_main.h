@@ -205,6 +205,12 @@ typedef struct FLAG_
 
 	unsigned char NeedShutDown:1;				//电池电压达到或者低于设定值时，关机
 	unsigned char NeedSendUpgResult:1;			//需要发送升级结果
+	unsigned char NeedSendResponse:1;			//需要应答服务器消息
+	unsigned char NeedResponseFrist:1;			//某些下发指令需要先应答后再执行
+
+	unsigned char NeedSendAskTest:1;			//需要发送测试请求指令
+	unsigned char InTesting:1;					//设备出于测试模式
+
 
 }FLAG;
 #endif

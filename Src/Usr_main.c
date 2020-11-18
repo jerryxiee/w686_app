@@ -26,6 +26,7 @@ u8 Built_min[3] = {'\0'};
 void Usr_InitHardware(void);
 void Usr_InitValue(void);
 void Flag_Check(void);
+void Device_Test_Handle(void);
 
 void time_convert(void)
 {
@@ -66,6 +67,7 @@ int main(void)
 		FS_UpdateValue();
 		Sensor_Handle();
 		Flag_Check();
+
 		WatchDogCnt = 0;
 	}
 }
@@ -183,3 +185,12 @@ void Flag_Check(void)
 	}
 }
 
+//用于产线自动化测试
+void Device_Test_Handle(void)
+{
+	if(!Flag.InTesting)
+	{
+		return;
+	}
+
+}

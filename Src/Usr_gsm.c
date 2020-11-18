@@ -217,12 +217,6 @@ void Usr_ModuleReset(void)
 		printf("\r\n---->module reset:%d\r\n", NeedModuleReset);
 		NeedModuleReset = 0;
 
-		if (Flag.NeedClrValueFile)
-		{
-			Flag.NeedClrValueFile = 0;
-			FS_FactroyValueFile();
-		}
-
 		Flag.NeedModuleOff = 1;
 		Usr_ModuleTurnOff();
 
@@ -237,12 +231,24 @@ void Usr_DevicePwrHandle(void)
 {
 	if (Flag.NeedClrValueFile) 
 	{
+		if(Flag.NeedResponseFrist)
+		{
+			return;
+		}
 		Flag.NeedClrValueFile = 0;
+		printf("Set parametert to factory\r\n");
 		FS_FactroyValueFile();
+		WaitRestart = 3;		//三秒后重启
+		return;
 	}
 
 	if (Flag.NeedDeviceRst)
 	{
+		if(Flag.NeedResponseFrist)		//平台下发重启设备时，需要首先应答平台消息，再重启设备
+		{
+			return;
+		}
+
 		Flag.NeedDeviceRst = 0;
 		printf("\r\nDevice RESET!");
 
@@ -255,13 +261,13 @@ void Usr_DevicePwrHandle(void)
 
 void Usr_Device_ShutDown(void)
 {
-	if(Flag.NeedShutDown == 0)
+	if((!Flag.NeedShutDown)||(Flag.NeedResponseFrist))
 	{
 		return;
 	}
 
-
-	printf("\r\nLow battery,Device ShutDown!\r\n");
+	Flag.NeedShutDown = 0;
+	printf("\r\nDevice ShutDown,can be wakeup by plug external power\r\n");
 
 	Flag.NeedModuleOff = 1;
 	Usr_ModuleTurnOff();				//关模块
@@ -270,7 +276,6 @@ void Usr_Device_ShutDown(void)
 	LL_PWR_SetPowerMode(LL_PWR_MODE_STOP1);
 	LL_LPM_EnableDeepSleep();			//进入停止模式
 	__WFI();
-
 	NVIC_SystemReset();					//外部充电中断唤醒后直接重启
 }
 
