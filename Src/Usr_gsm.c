@@ -238,7 +238,7 @@ void Usr_DevicePwrHandle(void)
 		Flag.NeedClrValueFile = 0;
 		printf("Set parametert to factory\r\n");
 		FS_FactroyValueFile();
-		WaitRestart = 3;		//三秒后重启
+		WaitRestart = 10;		//最长秒后重启
 		return;
 	}
 
@@ -254,7 +254,6 @@ void Usr_DevicePwrHandle(void)
 
 		Flag.NeedModuleOff = 1;
 		Usr_ModuleTurnOff();
-
 		NVIC_SystemReset();
 	}
 }

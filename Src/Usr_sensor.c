@@ -186,7 +186,7 @@ void CO2_Data_Receive(void)
     {
         co2_module_value = 400;        
     }
-
+    Test.GetCo2Date = 1;
     printf("\nThe CO2 value is %d ppm\n",co2_module_value);
 
 }
@@ -374,6 +374,8 @@ void Read_SHT31_Data(void)
         }
 
         data_error_cnt = 0;
+        Test.GetSht31Data = 1;
+        
         sprintf(debug,"Temperature: %.1f*C, Humidity: %.1f%%\r\n",temperature_value,humidity_value);
         printf(debug);
     }

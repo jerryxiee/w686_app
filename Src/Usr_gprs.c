@@ -688,9 +688,7 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 				}
 				else if(*p0 == '0')
 				{
-					Flag.NeedShutDown = 1;	
-					Flag.NeedResponseFrist = 1;		
-					strcpy(RespServiceBuf,"Ready power off device");		
+	
 				}
 				else
 				{

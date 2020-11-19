@@ -419,6 +419,7 @@ void EXTI0_1_IRQHandler(void)
             printf("\r\n----------> Infrared detected! <-----------\r\n\r\n");
         }
         ir_value ++;
+        Test.GetRiAction = 1;
     }
 
 }

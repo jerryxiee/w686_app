@@ -20,7 +20,7 @@ u8 At_test_buf[6] = {"AT\r\n"};
 
 //----------------------printf功能实现------------------------------//
 
-#if 1
+#if 0
 #pragma import(__use_no_semihosting)                           
 struct __FILE 
 { 
@@ -76,10 +76,7 @@ void UART_CO2Init(void)
 
 void Debug_Receive(void)
 {
-	if((WaitEnterTest > 0) && (strstr(Uart3Buf, "AT^NOTE=0")))
-	{
-		Flag.Insleeping = 1;
-	}
+	Test_Receive();
 }
 
 void UART_DebugInit(void)
@@ -231,12 +228,6 @@ void At_Receive(void)
 void UART_Handle(void)
 {
 	static u8 i = 0;
-
-	if(Flag.NeedSendAskTest)
-	{
-		Flag.NeedSendAskTest = 0;
-		UART_Send(USART3,"^NOTE@T0=?\r\n",12);
-	}
 
 	if (Flag.Uart1HaveData && !Uart1RecCnt)
 	{
@@ -396,14 +387,15 @@ void Usr_USART3_UART_Init(void)
 	LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_USART3);
 
 	LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOB);
+	
 
 	/*  USART3 GPIO Configuration  
 	PB8   ------> USART3_TX
 	PB9   ------> USART3_RX 
 	*/
-	GPIO_InitStruct.Pin = LL_GPIO_PIN_2|LL_GPIO_PIN_0;
-	GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-	GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+	GPIO_InitStruct.Pin = LL_GPIO_PIN_10|LL_GPIO_PIN_11; 
+	GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE; 
+	GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
 	GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
 	GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
 	GPIO_InitStruct.Alternate = LL_GPIO_AF_4;
@@ -422,6 +414,9 @@ void Usr_USART3_UART_Init(void)
 	USART_InitStruct.HardwareFlowControl = LL_USART_HWCONTROL_NONE;
 	USART_InitStruct.OverSampling = LL_USART_OVERSAMPLING_16;
 	LL_USART_Init(USART3, &USART_InitStruct);
+	LL_USART_SetTXFIFOThreshold(USART3, LL_USART_FIFOTHRESHOLD_1_8);
+	LL_USART_SetRXFIFOThreshold(USART3, LL_USART_FIFOTHRESHOLD_1_8);
+	LL_USART_DisableFIFO(USART3);
 	LL_USART_ConfigAsyncMode(USART3);
 	LL_USART_EnableIT_RXNE_RXFNE(USART3);
 

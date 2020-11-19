@@ -18,6 +18,7 @@ unsigned char Rssi; //gsm信号强度原始数据
 unsigned short BatVoltage;		//电池电压，这里使用模块供电电压作为电池电压计算电池剩余电量
 char CsqValue[12];
 char MccMnc[7];
+char GsmRev[50];				//GSM模块版本
 
 
 
@@ -433,6 +434,33 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 				NeedModuleReset = NO_SIMCARD;
 			}
 		}
+		break;
+
+	case AT_ATI:
+		//提取模块的版本信息
+		if ((p1 = strstr(pSrc, "APRev:")) != NULL)
+		{
+			p1 += 6;
+			memset(GsmRev,0,sizeof(GsmRev));
+			ptem = strstr(p1, "\r\n");
+
+			if(ptem - p1 > sizeof(GsmRev))
+			{
+				strncpy(GsmRev,p1,ptem - p1);
+			}
+		}
+		//提起模块的IMEI
+		if ((p1 = strstr(pSrc, "IMEI:")) != NULL)
+		{
+			p1 += 5;
+			memset(IMEI,0,sizeof(IMEI));
+			ptem = strstr(p1, "\r\n");
+
+			if(ptem - p1 > sizeof(IMEI))
+			{
+				strncpy(IMEI,p1,ptem - p1);
+			}
+		}	
 		break;
 
 	case AT_CCID:
@@ -982,7 +1010,11 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 			AtDelayCnt = 0;
 			back = 1;
 		}
-
+		
+		if(WaitRestart > 0)
+		{
+			WaitRestart = 1;	
+		}
 		break;
 
 	case AT_SMSUB:
@@ -1100,7 +1132,7 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 			strncpy(BatValue, ptem, 4);
 			
 			BatVoltage = (u16)Usr_Atoi(BatValue);
-
+			Test.GetBatVoltage = 1;
 			if (strcmp(BatValue, "3450") < 0)
 			{
 				AT_CBC_IntervalTemp = 5;		//检测到电池电量低时，加快检测周期，尽快确认状态
@@ -1188,6 +1220,7 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 				CsqValue[0] = '-';
 				Itoa(i, CsqValue + 1);
 				strcat(CsqValue, " dBm");
+				Test.GetGsmCsq = 1;
 			}
 			*temType = AT_NULL;
 			back = 1;
@@ -1489,6 +1522,8 @@ void Flag_check(void)
 		return;
 	}
 
+
+
 	if (Flag.NeedcheckCCID)
 	{
 		Flag.NeedcheckCCID = 0;
@@ -1515,6 +1550,13 @@ void Flag_check(void)
 	{
 		UpgInfo.NeedUpdata = 0;
 		AtType = AT_HTTPTOFS;
+		return;
+	}
+
+	if (Test.NeedCheckATI)
+	{
+		Test.NeedCheckATI = 0;
+		AtType = AT_ATI;
 		return;
 	}
 

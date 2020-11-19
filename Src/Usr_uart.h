@@ -18,6 +18,7 @@ extern unsigned short Uart1Index;
 extern unsigned short Uart2Index;
 extern char Uart1Buf[UART1_BUF_LEN];   
 extern char Uart2Buf[UART2_BUF_LEN];   
+extern char Uart3Buf[UART3_BUF_LEN]; 
 extern char Uart4Buf[UART4_BUF_LEN];
 
 

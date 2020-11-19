@@ -5,6 +5,7 @@
  * Extern Variables (Extern /Global)
  ********************************************************************/
 FLAG Flag;
+
 unsigned short ResetCnt = 0;
 unsigned short WaitAtTime;		//等待AT超时时间，默认是75，可以根据不同AT指令修改
 unsigned char WatchDogCnt = 0; 
@@ -17,6 +18,9 @@ const unsigned char SoftwareBuilt[50] = {0};
 char Edition[50] = {0};
 
 
+char Edition_STD[50] = {"w868_SIM7080G_V0.0.3"};				//程序的稳定版本，手动设置版本型号
+char HardWare_Edition[50] = {"TY197_MAIN_V1.0"};		//硬件版本，手动设置版本型号
+
 u8 Built_year[5] = {'\0'};
 u8 Built_mon[3] = {'\0'};
 u8 Built_day[3] = {'\0'};
@@ -26,7 +30,6 @@ u8 Built_min[3] = {'\0'};
 void Usr_InitHardware(void);
 void Usr_InitValue(void);
 void Flag_Check(void);
-void Device_Test_Handle(void);
 
 void time_convert(void)
 {
@@ -47,16 +50,17 @@ void time_convert(void)
 }
 
 int main(void)
-
 {
 	time_convert();
 	printf("\r\n============================================");
-	printf("\r\n===========w868_SIM7080G_V0.0.3=============");
+	printf("\r\n===========%s=============",Edition_STD);
 	sprintf(Edition, "w868_SIM7080G_%s%s%s%s%s", Built_year, Built_mon, Built_day, Built_hour, Built_min);
 	printf("\r\n==software built time:%s %s==", __DATE__, __TIME__);
 	printf("\r\n============================================\r\n");
 	Usr_InitHardware();
 	Usr_InitValue();
+	Test_Init();
+	UART_Send(USART3,"^NOTE@T0=?\r\n",12);
 	while (1)
 	{
 		Usr_DeviceContral();
@@ -67,7 +71,7 @@ int main(void)
 		FS_UpdateValue();
 		Sensor_Handle();
 		Flag_Check();
-
+		Test_Handle();
 		WatchDogCnt = 0;
 	}
 }
@@ -94,8 +98,6 @@ void Usr_InitHardware(void)
 
 void Usr_InitValue(void)
 {
-//	unsigned char i;
-
 	GprsSend.posCnt = 1;
 	GprsSend.posFlag = 1;
 
@@ -185,12 +187,4 @@ void Flag_Check(void)
 	}
 }
 
-//用于产线自动化测试
-void Device_Test_Handle(void)
-{
-	if(!Flag.InTesting)
-	{
-		return;
-	}
 
-}

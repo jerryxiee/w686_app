@@ -35,6 +35,7 @@
 #include "Usr_gsm.h"
 #include "Usr_Upgrade.h"
 #include "Usr_iic.h"
+#include "Usr_test.h"
 #include "MD5.h"
 
 #define USR_RTT_DEBUG	1			//为1时，使用RTT输出printf；为0时，使用串口输出printf
@@ -208,12 +209,10 @@ typedef struct FLAG_
 	unsigned char NeedSendResponse:1;			//需要应答服务器消息
 	unsigned char NeedResponseFrist:1;			//某些下发指令需要先应答后再执行
 
-	unsigned char NeedSendAskTest:1;			//需要发送测试请求指令
-	unsigned char InTesting:1;					//设备出于测试模式
-
-
 }FLAG;
 #endif
+
+
 
 extern unsigned char  AtTimeOutCnt;
 extern unsigned char  WatchDogCnt;
@@ -225,6 +224,9 @@ extern unsigned short NoShockCnt;
 extern unsigned char ModePwrDownCnt;
 extern unsigned short WaitAtTime;
 extern char Edition[50];
+extern char Edition_STD[50];
+extern char HardWare_Edition[50];
+
 
 void Usr_ModuleWakeUp(void);
 void Usr_ModuleTurnOff(void);

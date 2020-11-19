@@ -58,7 +58,9 @@ extern unsigned short GprsRecDataLen;
 extern unsigned short BatVoltage;
 
 extern char MccMnc[7];
-extern char Imei[16];					
+extern char Imei[16];		
+extern char GsmRev[50];		
+extern char CsqValue[12];	
 	
 
 void AT_SendPacket(AT_TYPE temType,char * pDst);

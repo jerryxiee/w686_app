@@ -28,7 +28,6 @@ extern unsigned char ResetLeftCnt;
 extern unsigned int  Timestamp;	
 extern unsigned int  baseSecCnt;
 extern unsigned char AT_CBC_IntervalTemp; 
-extern unsigned char WaitEnterTest;
 extern unsigned char WaitRestart;
 void TIMER_Init(void);
 void TIMER_DelayMs(unsigned int ms);

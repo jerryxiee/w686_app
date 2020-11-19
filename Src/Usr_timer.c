@@ -14,7 +14,7 @@ unsigned short IntervalTemp; //用来暂存定时上传时间间隔
 unsigned char WaitRestart;		//等待一段时间后重启，用于某些时候需要先发送GPRS数据后再重启
 
 unsigned char AT_CBC_IntervalTemp; 	//电池电量采样间隔
-unsigned char WaitEnterTest;		//开机等待进入测试模式时间窗口，在该时间窗口内，等待外部应答后进入测试模式
+
 
 const unsigned char arr_nDays[12] = 	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 const unsigned char Leap_month_day[12]=	{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}; //闰年 
@@ -133,10 +133,13 @@ void TIMER_SecCntHandle(void)
 		}
 	}
 
-	if(WaitEnterTest > 0)
+	if(Test.WaitEnterTest > 0)
 	{
-		WaitEnterTest --; 
-		Flag.NeedSendAskTest = 1;
+		Test.WaitEnterTest --;
+		if((Test.WaitEnterTest == 0) && (Test.TestStep == 0xFF))
+		{
+			Test.TestOver = 1;
+		}
 	}
 
 	if(WaitRestart > 0)
@@ -356,6 +359,10 @@ void TIMER_BaseCntHandle(void)
 	if (++ledCnt > 32)
 		ledCnt = 0; //周期为4s
 
+	if(Test.WaitTestCnt > 0)
+	{
+		Test.WaitTestCnt --;
+	}
 
 	if (Flag.ModuleSleep)
 	{
