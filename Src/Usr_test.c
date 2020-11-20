@@ -5,7 +5,7 @@ TEST Test;
 void Test_Init(void)
 {
     Test.TestStep = 0xFF;
-    Test.WaitEnterTest = 5;
+    Test.WaitEnterTest = 15;
     Test.NeedCheckATI = 1;
 }
 
@@ -22,7 +22,13 @@ void Test_Receive(void)
 	{
 		Test.TestStep = 0;
 	}
-    else if(strstr(Uart3Buf, "AT^SET0="))
+
+    if(Test.TestStep == 0xFF)      
+    {
+        return;
+    }
+
+    if(strstr(Uart3Buf, "AT^SET0="))
     {
         p0 = strstr(Uart3Buf, "AT^SET0=");
         p0 += 8;
@@ -38,13 +44,14 @@ void Test_Receive(void)
             if(memcmp(temp_buf,read_buf,strlen(temp_buf)) == 0)
             {
                 sprintf(send_buf,"^DEV@TST=%s",temp_buf);
-                UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
+                UART_Send(USART3,(u8 *)send_buf,strlen(send_buf)-1);        //长度减1是去掉“#”
             }
         }
     }
     else if(strstr(Uart3Buf, "AT^SET1="))
     {
         Test.TestOver = 1;
+        UART_Send(USART3,"Test over\r\n",11); 
     }
     else if(strstr(Uart3Buf, "AT^SET2="))
     {
@@ -61,7 +68,7 @@ void Test_Receive(void)
             if(memcmp(temp_buf,read_buf,strlen(temp_buf)) == 0)
             {
                 sprintf(send_buf,"^DEV@TST=%s",temp_buf);
-                UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
+                UART_Send(USART3,(u8 *)send_buf,strlen(send_buf)-1);
             }
         }
     }
@@ -80,7 +87,7 @@ void Test_Receive(void)
             if(memcmp(temp_buf,read_buf,strlen(temp_buf)) == 0)
             {
                 sprintf(send_buf,"^DEV@TST=%s",temp_buf);
-                UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
+                UART_Send(USART3,(u8 *)send_buf,strlen(send_buf)-1);
             }
         }
     }
@@ -88,29 +95,38 @@ void Test_Receive(void)
     {
         EXFLASH_ReadBuffer((u8 *)read_buf,TESTRESULTADDR_0,sizeof(read_buf));
         p0 = strstr(read_buf,"#");
-        UART_Send(USART3,(u8 *)read_buf,p0 - read_buf);
+        *p0 = 0;
+        sprintf(send_buf,"^DEV@TST=%s",read_buf);
+        UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
     }
     else if(strstr(Uart3Buf, "AT^GET1="))
     {
         EXFLASH_ReadBuffer((u8 *)read_buf,TESTRESULTADDR_1,sizeof(read_buf));
         p0 = strstr(read_buf,"#");
-        UART_Send(USART3,(u8 *)read_buf,p0 - read_buf);
+        *p0 = 0;
+        sprintf(send_buf,"^DEV@GET1=%s",read_buf);
+        UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
     }
     else if(strstr(Uart3Buf, "AT^GET2="))
     {
         EXFLASH_ReadBuffer((u8 *)read_buf,TESTRESULTADDR_2,sizeof(read_buf));
         p0 = strstr(read_buf,"#");
-        UART_Send(USART3,(u8 *)read_buf,p0 - read_buf);
+        *p0 = 0;
+        sprintf(send_buf,"^DEV@GET2=%s",read_buf);
+        UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
     }
     else if(strstr(Uart3Buf, "AT^GET3="))
     {
         EXFLASH_ReadBuffer((u8 *)read_buf,TESTRESULTADDR_3,sizeof(read_buf));
         p0 = strstr(read_buf,"#");
-        UART_Send(USART3,(u8 *)read_buf,p0 - read_buf);
+        *p0 = 0;
+        sprintf(send_buf,"^DEV@GET3=%s",read_buf);
+        UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
     }
 
     else if(strstr(Uart3Buf, "AT^NOTE="))
     {
+        Test.WaitTestCnt = 0;
         p0 = strstr(Uart3Buf, "AT^NOTE=");
         p0 += 8;
 
@@ -157,76 +173,95 @@ void Test_Handle(void)
         return;
     }
     Test.WaitTestCnt = 10;
-    switch (Test.TestStep)
+
+    if(Test.TestOverStep != Test.TestStep)
     {
-        case 1:                     //测试步骤1，输出软件版本及硬件版本    
-            sprintf(SendDataTemp,"^TST@SW=%s;HW=%s\r\n",Edition_STD,HardWare_Edition);
-            UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
-        break;
-
-        case 2:                     //测试步骤2，输出模块版本及IMEI   
-            if((Test.GetIMEI) && (Test.GetModuleAti))
-            {
-                sprintf(SendDataTemp,"^DEV@IMEI=%s;Module ATI=%s\r\n",IMEI,GsmRev);
+        switch (Test.TestStep)
+        {
+            case 1:                     //测试步骤1，输出软件版本及硬件版本    
+                sprintf(SendDataTemp,"^TST@SW=%s;HW=%s\r\n",Edition_STD,HardWare_Edition);
                 UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
-            }      
-        break;
+                Test.TestOverStep = Test.TestStep;
+                
+            break;
 
-        case 3:                     //测试步骤3，外部flash测试结果
-            if(Test.ExflashTestOver)
-            {
-                if(Test.ExflashTestOk)
+            case 2:                     //测试步骤2，输出模块版本及IMEI   
+                if((Test.GetIMEI) && (Test.GetModuleAti))
                 {
-                    sprintf(SendDataTemp,"^EXFLASH@KEY=1\r\n");
+                    sprintf(SendDataTemp,"^DEV@IMEI=%s;Module ATI=%s\r\n",IMEI,GsmRev);
+                    UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
+                    Test.TestOverStep = Test.TestStep;
+                }  
+                else
+                {
+                    sprintf(SendDataTemp,"^NOTE@T0=%d\r\n",Test.TestStep);
+                    UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));               /* code */
+                }               
+            break;
+
+            case 3:                     //测试步骤3，外部flash测试结果
+                if(Test.ExflashTestOver)
+                {
+                    if(Test.ExflashTestOk)
+                    {
+                        sprintf(SendDataTemp,"^EXFLASH@KEY=1\r\n");
+                    }
+                    else
+                    {
+                        sprintf(SendDataTemp,"^EXFLASH@KEY=0\r\n");
+                    }
+                    UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
+                    Test.TestOverStep = Test.TestStep;
+                }      
+            break;
+
+            case 4:                     //测试步骤4，GSM测试结果
+                if((Test.GetGsmCsq) && (Test.GetBatVoltage))
+                {
+                    sprintf(SendDataTemp,"^GSM@CSQ=%s;BAT=%d\r\n",CsqValue,BatVoltage);
+                    UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
+                    Test.TestOverStep = Test.TestStep;
+                }      
+                else
+                {
+                    sprintf(SendDataTemp,"^NOTE@T0=%d\r\n",Test.TestStep);
+                    UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));               /* code */
+                }
+            break;
+
+            case 5:                     //测试步骤5，sensor测试结果,除RI外
+                sprintf(SendDataTemp,"^SENSOR@CO2=%d;TEMP=%.1f*C;HUMI=%.1f%%\r\n",co2_module_value,temperature_value,humidity_value);
+                UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
+                Test.TestOverStep = Test.TestStep;
+            break;
+
+            case 6:                     //测试步骤6，RI测试结果
+                if(Test.GetRiAction) 
+                {
+                    sprintf(SendDataTemp,"^RI@KEY=1\r\n");
                 }
                 else
                 {
-                    sprintf(SendDataTemp,"^EXFLASH@KEY=0\r\n");
+                    sprintf(SendDataTemp,"^RI@KEY=0\r\n");
                 }
                 UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
-            }      
-        break;
-
-        case 4:                     //测试步骤4，GSM测试结果
-            if((Test.GetGsmCsq) && (Test.GetBatVoltage))
-            {
-                sprintf(SendDataTemp,"^GSM@CSQ=%s;BAT=%d\r\n",CsqValue,BatVoltage);
-                UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
-            }      
-        break;
-
-        case 5:                     //测试步骤5，sensor测试结果,除RI外
-            if((Test.GetCo2Date) && (Test.GetSht31Data))
-            {
-                sprintf(SendDataTemp,"^SENSOR@CO2=%d;TEMP=%.1f*C;HUMI=%.1f%%\r\n",co2_module_value,temperature_value,humidity_value);
-                UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
-            }      
-        break;
-
-        case 6:                     //测试步骤6，RI测试结果
-            if(Test.GetRiAction) 
-            {
-                sprintf(SendDataTemp,"^RI@KEY=1\r\n");
-            }
-            else
-            {
-                sprintf(SendDataTemp,"^RI@KEY=0\r\n");
-            }
-            UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
-                
-        break;
-
-        case 7:                     //测试步骤7,读取关键参数,平台地址和端口，APN相关信息
-            memset(&Fs, 0, sizeof(Fs));
-            STMFLASH_Read(FLASH_SAVE_ADDR, (u32 *)&Fs, (u16)(sizeof(Fs))/4);
-            sprintf(SendDataTemp,"^DEVINFO@IP=%s,%s;APN=%s,%s,%s\r\n",Fs.AppIpAdress,Fs.AppIpPort,Fs.ApnName,Fs.GprsUserName,Fs.GprsPassWord);
-            UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
-                
-        break;
-    
-        default:
+                Test.TestOverStep = Test.TestStep;
+                    
             break;
+
+            case 7:                     //测试步骤7,读取关键参数,平台地址和端口，APN相关信息
+                memset(&Fs, 0, sizeof(Fs));
+                STMFLASH_Read(FLASH_SAVE_ADDR, (u32 *)&Fs, (u16)(sizeof(Fs))/4);
+                sprintf(SendDataTemp,"^APN@APN=%s;USRNAME=%s;PASSWORD=%s\r\n",Fs.ApnName,Fs.GprsUserName,Fs.GprsPassWord);
+                UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
+                Test.TestOverStep = Test.TestStep;    
+            break;
+        
+            default:
+                break;
+        }
     }
+
 
     if(!Test.ExflashTestOver)
     {

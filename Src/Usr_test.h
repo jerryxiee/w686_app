@@ -25,11 +25,11 @@ typedef struct{
     unsigned char   ExflashTestOver:1;  //外部flash读写测试完成
     unsigned char   NeedCheckATI:1;     //需要查询模块的ATI
 
-    unsigned char   WaitTestCnt;        //Test_Handle一秒执行一次
+    unsigned char   WaitTestCnt;        //Test_Handle执行周期
 	unsigned char 	WaitEnterTest;		//开机后等待外部发送指令进入测试模式的窗口时间
     unsigned char 	WaitRiAction;		//等待
 	unsigned char 	TestStep;			//测试到哪一步，这个值需要初始化为0xFF
-
+    unsigned char   TestOverStep;       //测试完成到哪一步，配合TestStep来实现不重复发送测试结果
 }TEST;
 #endif
 

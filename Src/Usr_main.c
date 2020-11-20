@@ -60,7 +60,7 @@ int main(void)
 	Usr_InitHardware();
 	Usr_InitValue();
 	Test_Init();
-	UART_Send(USART3,"^NOTE@T0=?\r\n",12);
+
 	while (1)
 	{
 		Usr_DeviceContral();

@@ -447,6 +447,7 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 			if(ptem - p1 > sizeof(GsmRev))
 			{
 				strncpy(GsmRev,p1,ptem - p1);
+				Test.GetModuleAti = 1;
 			}
 		}
 		//提起模块的IMEI
@@ -459,6 +460,7 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 			if(ptem - p1 > sizeof(IMEI))
 			{
 				strncpy(IMEI,p1,ptem - p1);
+				Test.GetIMEI = 1;
 			}
 		}	
 		break;
@@ -1219,7 +1221,7 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 
 				CsqValue[0] = '-';
 				Itoa(i, CsqValue + 1);
-				strcat(CsqValue, " dBm");
+				strcat(CsqValue, "dBm");
 				Test.GetGsmCsq = 1;
 			}
 			*temType = AT_NULL;

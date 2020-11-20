@@ -101,6 +101,9 @@ void UART_BleInit(void)
 
 void At_Receive(void)
 {
+	char *ptem = NULL;
+	char *p1 = NULL;
+
 	//有时在AT无应答时，发送指令后，模块会返回0x0D这一个无意义的数，需要过滤掉
 	if(strlen(Uart1Buf) >= 2)
 	{
@@ -219,6 +222,32 @@ void At_Receive(void)
 			{
 				strcpy(FsUpg.HttpError,"Other Errors");
 			}
+		}
+	}
+
+	if ((p1 = strstr(Uart1Buf, "APRev:")) != NULL)
+	{
+		p1 += 6;
+		memset(GsmRev,0,sizeof(GsmRev));
+		ptem = strstr(p1, "\r\n");
+
+		if(ptem - p1 < sizeof(GsmRev))
+		{
+			strncpy(GsmRev,p1,ptem - p1);
+			Test.GetModuleAti = 1;
+		}
+	}
+	//提起模块的IMEI
+	if ((p1 = strstr(Uart1Buf, "IMEI:")) != NULL)
+	{
+		p1 += 5;
+		memset(IMEI,0,sizeof(IMEI));
+		ptem = strstr(p1, "\r\n");
+
+		if(ptem - p1 < sizeof(IMEI))
+		{
+			strncpy(IMEI,p1,ptem - p1);
+			Test.GetIMEI = 1;
 		}
 	}
 
@@ -386,20 +415,20 @@ void Usr_USART3_UART_Init(void)
 
 	LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_USART3);
 
-	LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOB);
+	LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOD);
 	
 
 	/*  USART3 GPIO Configuration  
 	PB8   ------> USART3_TX
 	PB9   ------> USART3_RX 
 	*/
-	GPIO_InitStruct.Pin = LL_GPIO_PIN_10|LL_GPIO_PIN_11; 
+	GPIO_InitStruct.Pin = LL_GPIO_PIN_8|LL_GPIO_PIN_9; 
 	GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE; 
 	GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
 	GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
 	GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
 	GPIO_InitStruct.Alternate = LL_GPIO_AF_4;
-	LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+	LL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
 	/* USART3 interrupt Init */
 	NVIC_SetPriority(USART3_4_IRQn, 1);
@@ -414,9 +443,6 @@ void Usr_USART3_UART_Init(void)
 	USART_InitStruct.HardwareFlowControl = LL_USART_HWCONTROL_NONE;
 	USART_InitStruct.OverSampling = LL_USART_OVERSAMPLING_16;
 	LL_USART_Init(USART3, &USART_InitStruct);
-	LL_USART_SetTXFIFOThreshold(USART3, LL_USART_FIFOTHRESHOLD_1_8);
-	LL_USART_SetRXFIFOThreshold(USART3, LL_USART_FIFOTHRESHOLD_1_8);
-	LL_USART_DisableFIFO(USART3);
 	LL_USART_ConfigAsyncMode(USART3);
 	LL_USART_EnableIT_RXNE_RXFNE(USART3);
 
@@ -437,18 +463,18 @@ void Usr_USART4_UART_Init(void)
 	LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
 	LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_USART4);
-	LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOC);
+	LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA);
 	/**USART4 GPIO Configuration  
 	 PA0   ------> USART4_TX
 	PA1   ------> USART4_RX 
 	*/
-	GPIO_InitStruct.Pin = LL_GPIO_PIN_10|LL_GPIO_PIN_11;
+	GPIO_InitStruct.Pin = LL_GPIO_PIN_0|LL_GPIO_PIN_1;
 	GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
 	GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
 	GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
 	GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
 	GPIO_InitStruct.Alternate = LL_GPIO_AF_4;
-	LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+	LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 	/* USART4 interrupt Init */
 	NVIC_SetPriority(USART3_4_IRQn, 1);
