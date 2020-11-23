@@ -726,7 +726,7 @@ void WIRELESS_Handle(void)
 	//AT指令延时时间到仍没回复，复位模块
 	if (AtType != AT_NULL && Flag.WaitAtAck && !AtDelayCnt)
 	{
-		TIMER_DelayMs(500);
+		delay_ms(500);
 		printf("\r\n---->wait AT response cnt:");
 		printf("%d(%d)\r\n", ResetCnt, AtType);
 

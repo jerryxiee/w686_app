@@ -60,7 +60,6 @@ int main(void)
 	Usr_InitHardware();
 	Usr_InitValue();
 	Test_Init();
-
 	while (1)
 	{
 		Usr_DeviceContral();
@@ -93,6 +92,7 @@ void Usr_InitHardware(void)
 	IIC_Init();
 	EXFLASH_SpiInit();
 	Sensor_Init();	
+	Adc_init();
 }
 
 
@@ -113,7 +113,6 @@ void Usr_InitValue(void)
 	Flag.NtpGetCCLK = 1;
 	Flag.NeedSetNtp = 1;
 	Flag.NeedGetIMEI = 1;
-	Flag.NeedcheckCCID = 1;
 	#if USE_SOFTSIM
 	Flag.NeedChangeSoftSim = 1;
 	#endif
@@ -185,6 +184,16 @@ void Flag_Check(void)
 		Flag.NeedSendUpgResult = 1;
 		UpgInfo_InitValue();
 	}
+
+	if(Flag.NeedGetBatVoltage)
+	{
+		Flag.NeedGetBatVoltage = 0;
+		BatVoltage_Adc = Adc_Value_Get();
+		BatVoltage_Adc = BatVoltage_Adc * 3;		//转换成电池电压
+		printf("The battery voltage is %d mv\r\n",BatVoltage_Adc);
+	}
+	
 }
+
 
 

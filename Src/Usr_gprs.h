@@ -35,8 +35,8 @@ typedef enum{
 #else
 	//#define IMEI_MANUAL	"352656103523604"
 	//#define IMEI_MANUAL	"352656103473735"
-	#define IMEI_MANUAL	"999999999999999"
-	//#define IMEI_MANUAL	""
+	//#define IMEI_MANUAL	"999999999999999"
+	#define IMEI_MANUAL	""
 	#define USE_SOFTSIM		0
 
 #endif

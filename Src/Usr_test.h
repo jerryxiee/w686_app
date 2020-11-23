@@ -17,6 +17,7 @@ typedef struct{
     unsigned char   GetSht31Data:1;     //获取到温湿度传感器数据
     unsigned char   GetCo2Date:1;       //获取到二氧化碳传感器数据
     unsigned char   GetGsmCsq:1;        //获取到GSM模块的csq数据
+    unsigned char   GetGsmCCID:1;       //获取到GSM模块的CCID
     unsigned char   GetBatVoltage:1;    //获取到电池电压
     unsigned char   GetRiAction:1;      //检测到RI触发
     unsigned char   GetDeviceInfo:1;    //获取到设备配置信息

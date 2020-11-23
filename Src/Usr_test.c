@@ -7,6 +7,7 @@ void Test_Init(void)
     Test.TestStep = 0xFF;
     Test.WaitEnterTest = 15;
     Test.NeedCheckATI = 1;
+    UART_Send(USART3,"Device can enter Test mode by send Test command in 10s\r\n",56);
 }
 
 
@@ -156,6 +157,9 @@ void Test_Receive(void)
          case '8':
             Test.TestStep = 8;
             break;
+         case '9':
+            Test.TestStep = 9;
+            break;
         default:
             break;
         }
@@ -215,10 +219,10 @@ void Test_Handle(void)
                 }      
             break;
 
-            case 4:                     //测试步骤4，GSM测试结果
-                if((Test.GetGsmCsq) && (Test.GetBatVoltage))
+            case 4:                     //测试步骤4，CCID读取
+                if(Test.GetGsmCCID) 
                 {
-                    sprintf(SendDataTemp,"^GSM@CSQ=%s;BAT=%d\r\n",CsqValue,BatVoltage);
+                    sprintf(SendDataTemp,"^GSM@CCID=%s\r\n",CCID);
                     UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
                     Test.TestOverStep = Test.TestStep;
                 }      
@@ -256,7 +260,27 @@ void Test_Handle(void)
                 UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
                 Test.TestOverStep = Test.TestStep;    
             break;
-        
+
+            case 8:                     //测试步骤8,读取电池电压
+                sprintf(SendDataTemp,"^BAT@VOLTAGE=%d\r\n",BatVoltage_Adc);
+                UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
+                Test.TestOverStep = Test.TestStep;  
+            break;       
+
+            case 9:                     //测试步骤9,读取GSM信号强度
+                if(Test.GetGsmCsq) 
+                {
+                    sprintf(SendDataTemp,"^GSM@CSQ=%s\r\n",CsqValue);
+                    UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
+                    Test.TestOverStep = Test.TestStep;
+                }      
+                else
+                {
+                    sprintf(SendDataTemp,"^NOTE@T0=%d\r\n",Test.TestStep);
+                    UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));               /* code */
+                }
+            break;   
+
             default:
                 break;
         }

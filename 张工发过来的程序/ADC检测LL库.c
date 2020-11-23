@@ -251,128 +251,26 @@ int main(void)
   */
 void Configure_ADC(void)
 {
-#if (USE_TIMEOUT == 1)
-	uint32_t Timeout = 0U; /* Variable used for timeout management */
-#endif /* USE_TIMEOUT */
-
-	/*## Configuration of GPIO used by ADC channels ############################*/
-
-	/* Note: On this STM32 device, ADC1 channel 4 is mapped on GPIO pin PA.04 */
-
-	/* Enable GPIO Clock */
-	LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA);
-	LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOB);
-
-	/* Configure GPIO in analog mode to be used as ADC input */
-	LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_0, LL_GPIO_MODE_ANALOG);
-	LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_1, LL_GPIO_MODE_ANALOG);
-	LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_11, LL_GPIO_MODE_ANALOG);
-	/*## Configuration of NVIC #################################################*/
-	/* Configure NVIC to enable ADC1 interruptions */
-//  NVIC_SetPriority(ADC1_IRQn, 0);
-//  NVIC_EnableIRQ(ADC1_IRQn);
-
-	/*## Configuration of ADC ##################################################*/
-
-	/*## Configuration of ADC hierarchical scope: common to several ADC ########*/
-
-	/* Enable ADC clock (core clock) */
-	LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_ADC);
-
-	/* Note: Hardware constraint (refer to description of the functions         */
-	/*       below):                                                            */
-	/*       On this STM32 serie, setting of these features is conditioned to   */
-	/*       ADC state:                                                         */
-	/*       All ADC instances of the ADC common group must be disabled.        */
-	/* Note: In this example, all these checks are not necessary but are        */
-	/*       implemented anyway to show the best practice usages                */
-	/*       corresponding to reference manual procedure.                       */
-	/*       Software can be optimized by removing some of these checks, if     */
-	/*       they are not relevant considering previous settings and actions    */
-	/*       in user application.                                               */
-	if(__LL_ADC_IS_ENABLED_ALL_COMMON_INSTANCE() == 0)
-	{
-		/* Note: Call of the functions below are commented because they are       */
-		/*       useless in this example:                                         */
-		/*       setting corresponding to default configuration from reset state. */
-
-		/* Set ADC clock (conversion clock) common to several ADC instances */
-		/* Note: On this STM32 serie, ADC common clock asynchonous prescaler      */
-		/*       is applied to each ADC instance if ADC instance clock is         */
-		/*       set to clock source asynchronous                                 */
-		/*       (refer to function "LL_ADC_SetClock()" below).                   */
-		// LL_ADC_SetCommonClock(__LL_ADC_COMMON_INSTANCE(ADC1), LL_ADC_CLOCK_ASYNC_DIV1);
-
-		/* Set ADC measurement path to internal channels */
-		// LL_ADC_SetCommonPathInternalCh(__LL_ADC_COMMON_INSTANCE(ADC1), LL_ADC_PATH_INTERNAL_NONE);
-
-
-		/*## Configuration of ADC hierarchical scope: multimode ####################*/
-
-		/* Note: Feature not available on this STM32 serie */
-
-	}
-
-
-	/*## Configuration of ADC hierarchical scope: ADC instance #################*/
-
-	/* Note: Hardware constraint (refer to description of the functions         */
-	/*       below):                                                            */
-	/*       On this STM32 serie, setting of these features is conditioned to   */
-	/*       ADC state:                                                         */
-	/*       ADC must be disabled.                                              */
+	LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOB);					//使能GPIO时钟
+	LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_0, LL_GPIO_MODE_ANALOG);		//设置PB0为模拟输入
+	LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_ADC);					//使能ADC时钟
+                                          */
 	if (LL_ADC_IsEnabled(ADC1) == 0)
 	{
-		/* Note: Call of the functions below are commented because they are       */
-		/*       useless in this example:                                         */
-		/*       setting corresponding to default configuration from reset state. */
-
-		/* Set ADC clock (conversion clock) */
-		LL_ADC_SetClock(ADC1, LL_ADC_CLOCK_SYNC_PCLK_DIV4);
-
-		/* Set ADC data resolution */
-		// LL_ADC_SetResolution(ADC1, LL_ADC_RESOLUTION_12B);
-
-		/* Set ADC conversion data alignment */
-		// LL_ADC_SetResolution(ADC1, LL_ADC_DATA_ALIGN_RIGHT);
-
-		/* Set ADC low power mode */
-		// LL_ADC_SetLowPowerMode(ADC1, LL_ADC_LP_MODE_NONE);
-
-		/* Set ADC channels sampling time */
-		/* Note: On this STM32 serie, sampling time is common to groups           */
-		/*       of severals channels within ADC instance.                        */
-		/*       Therefore, groups of sampling sampling times are configured      */
-		/*       here under ADC instance scope.                                   */
-		/*       Then, sampling time of channels are configured below             */
-		/*       among group of sampling times available, at channel scope.       */
+		LL_ADC_SetClock(ADC1, LL_ADC_CLOCK_SYNC_PCLK_DIV4);				//设置ADC时钟分频
+		//设置ADC采样通道及采样时间
 		LL_ADC_SetSamplingTimeCommonChannels(ADC1, LL_ADC_SAMPLINGTIME_COMMON_1, LL_ADC_SAMPLINGTIME_39CYCLES_5);
 
 	}
 
-
-	/*## Configuration of ADC hierarchical scope: ADC group regular ############*/
-
-	/* Note: Hardware constraint (refer to description of the functions         */
-	/*       below):                                                            */
-	/*       On this STM32 serie, setting of these features is conditioned to   */
-	/*       ADC state:                                                         */
-	/*       ADC must be disabled or enabled without conversion on going        */
-	/*       on group regular.                                                  */
 	if ((LL_ADC_IsEnabled(ADC1) == 0)               ||
 	    (LL_ADC_REG_IsConversionOngoing(ADC1) == 0)   )
 	{
-		/* Set ADC group regular trigger source */
+		//设置ADC采样触发为软件触发
 		LL_ADC_REG_SetTriggerSource(ADC1, LL_ADC_REG_TRIG_SOFTWARE);
 
-		/* Set ADC group regular trigger polarity */
-		// LL_ADC_REG_SetTriggerEdge(ADC1, LL_ADC_REG_TRIG_EXT_RISING);
-
-		/* Set ADC group regular continuous mode */
+		//设置采样为连续转换模式
 		LL_ADC_REG_SetContinuousMode(ADC1, LL_ADC_REG_CONV_CONTINUOUS);
-
-		/* Set ADC group regular conversion data transfer */
-		// LL_ADC_REG_SetDMATransfer(ADC1, LL_ADC_REG_DMA_TRANSFER_NONE);
 
 		/* Set ADC group regular overrun behavior */
 		LL_ADC_REG_SetOverrun(ADC1, LL_ADC_REG_OVR_DATA_PRESERVED);
@@ -391,85 +289,34 @@ void Configure_ADC(void)
 		/*       Refer to description of function                                 */
 		/*       "LL_ADC_REG_SetSequencerConfigurable()".                         */
 
-		/* Clear flag ADC channel configuration ready */
+		//清除ADC通道就绪标志位
 		LL_ADC_ClearFlag_CCRDY(ADC1);
 
 		/* Set ADC group regular sequencer configuration flexibility */
 		LL_ADC_REG_SetSequencerConfigurable(ADC1, LL_ADC_REG_SEQ_CONFIGURABLE);
-
-		/* Poll for ADC channel configuration ready */
-#if (USE_TIMEOUT == 1)
-		Timeout = ADC_CHANNEL_CONF_RDY_TIMEOUT_MS;
-#endif /* USE_TIMEOUT */
-
+		//等待ADC通道就绪
 		while (LL_ADC_IsActiveFlag_CCRDY(ADC1) == 0)
 		{
-#if (USE_TIMEOUT == 1)
-			/* Check Systick counter flag to decrement the time-out value */
-			if (LL_SYSTICK_IsActiveCounterFlag())
-			{
-				if(Timeout-- == 0)
-				{
-					/* Time-out occurred. Set LED to blinking mode */
-					LED_Blinking(LED_BLINK_ERROR);
-				}
-			}
-#endif /* USE_TIMEOUT */
 		}
-		/* Clear flag ADC channel configuration ready */
+		//清除ADC通道就绪标志位
 		LL_ADC_ClearFlag_CCRDY(ADC1);
 
-		/* Set ADC group regular sequencer length and scan direction */
+		//禁用ADC group regular sequencer
 		LL_ADC_REG_SetSequencerLength(ADC1, LL_ADC_REG_SEQ_SCAN_DISABLE);
-
-		/* Poll for ADC channel configuration ready */
-#if (USE_TIMEOUT == 1)
-		Timeout = ADC_CHANNEL_CONF_RDY_TIMEOUT_MS;
-#endif /* USE_TIMEOUT */
-
+		//等待ADC通道就绪
 		while (LL_ADC_IsActiveFlag_CCRDY(ADC1) == 0)
 		{
-#if (USE_TIMEOUT == 1)
-			/* Check Systick counter flag to decrement the time-out value */
-			if (LL_SYSTICK_IsActiveCounterFlag())
-			{
-				if(Timeout-- == 0)
-				{
-					/* Time-out occurred. Set LED to blinking mode */
-					LED_Blinking(LED_BLINK_ERROR);
-				}
-			}
-#endif /* USE_TIMEOUT */
 		}
-		/* Clear flag ADC channel configuration ready */
+		//清除ADC通道就绪标志位
 		LL_ADC_ClearFlag_CCRDY(ADC1);
-
-		/* Set ADC group regular sequencer discontinuous mode */
-		// LL_ADC_REG_SetSequencerDiscont(ADC1, LL_ADC_REG_SEQ_DISCONT_DISABLE);
 
 		/* Set ADC group regular sequence: channel on the selected sequence rank. */
 		LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_1, LL_ADC_CHANNEL_1);
 
-		/* Poll for ADC channel configuration ready */
-#if (USE_TIMEOUT == 1)
-		Timeout = ADC_CHANNEL_CONF_RDY_TIMEOUT_MS;
-#endif /* USE_TIMEOUT */
-
 		while (LL_ADC_IsActiveFlag_CCRDY(ADC1) == 0)
 		{
-#if (USE_TIMEOUT == 1)
-			/* Check Systick counter flag to decrement the time-out value */
-			if (LL_SYSTICK_IsActiveCounterFlag())
-			{
-				if(Timeout-- == 0)
-				{
-					/* Time-out occurred. Set LED to blinking mode */
-					LED_Blinking(LED_BLINK_ERROR);
-				}
-			}
-#endif /* USE_TIMEOUT */
+
 		}
-		/* Clear flag ADC channel configuration ready */
 		LL_ADC_ClearFlag_CCRDY(ADC1);
 	}
 

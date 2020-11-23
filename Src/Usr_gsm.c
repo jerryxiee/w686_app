@@ -107,24 +107,24 @@ void Usr_ModuleTurnOn(void)
 
 	printf("Ready turn on the GSM module\r\n");
 	POWER_OFF;
-	TIMER_DelayMs(1000);
+	delay_ms(1000);
 
 	POWER_ON; 		
 	while (i--)
 	{
-		TIMER_DelayMs(1000);
+		delay_ms(1000);
 		printf("-");
 	}
 
 	//重新上电
 	GSM_KEY_OFF; //模块PWRKEY为高
-	TIMER_DelayMs(300);
+	delay_ms(300);
 	GSM_KEY_ON; //模块PWRKEY为低
-	TIMER_DelayMs(1500);
+	delay_ms(1500);
 	GSM_KEY_OFF; //模块PWRKEY为高
-	TIMER_DelayMs(300);
+	delay_ms(300);
 
-	TIMER_DelayMs(2000);		//延时两秒，之后准备连续发送AT指令唤醒模块
+	delay_ms(2000);		//延时两秒，之后准备连续发送AT指令唤醒模块
 	Flag.NeedWakeMdByAt = 1;
 	Flag.RcvAtAckOK = 0;
 	Flag.HaveSmsReady = 0;
@@ -156,9 +156,9 @@ void Usr_ModuleTurnOff(void)
 
 	//先拉低引脚关模块
 	GSM_KEY_OFF; //模块PWRKEY为高
-	TIMER_DelayMs(500);
+	delay_ms(500);
 	GSM_KEY_ON; //模块PWRKEY为低
-	TIMER_DelayMs(1500);
+	delay_ms(1500);
 	GSM_KEY_OFF; //模块PWRKEY为高
 
 	Flag.HavePwdMode = 1;
@@ -172,7 +172,7 @@ void Usr_ModuleTurnOff(void)
 		{
 			POWER_OFF;
 			GREEN_OFF;
-			TIMER_DelayMs(500);
+			delay_ms(500);
 			Flag.HavePwdMode = 0;
 			printf("\r\nModule turn off!\r\n");
 		}

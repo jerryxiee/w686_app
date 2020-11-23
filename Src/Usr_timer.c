@@ -26,13 +26,13 @@ void TIMER_AtDelay(unsigned int i) //1对应1s 专用于AT指令延时
 	AtDelayCnt = i;
 }
 
-void TIMER_DelayUs(unsigned int us)
+void delay_us(unsigned int us)
 {
-//	delay_us(us);
+	LL_uDelay(us);
 }
 
 //参数小于1864ms
-void TIMER_DelayMs(unsigned int ms)
+void delay_ms(unsigned int ms)
 {
 	LL_mDelay(ms);
 }
@@ -154,7 +154,14 @@ void TIMER_SecCntHandle(void)
 	if((baseTimeSec % 30 == 0) && (Flag.InCharging == 0))
 	{
 		Flag.SensorLed = 1;
+		Flag.NeedGetBatVoltage = 1;
 	}
+
+	if(baseTimeSec % 3 == 0) 
+	{
+		Flag.NeedGetBatVoltage = 1;
+	}
+	
 	
 	WatchDogCnt++;
 	if (WatchDogCnt > 30)

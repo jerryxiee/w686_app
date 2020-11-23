@@ -36,6 +36,7 @@
 #include "Usr_Upgrade.h"
 #include "Usr_iic.h"
 #include "Usr_test.h"
+#include "Usr_adc.h"
 #include "MD5.h"
 
 #define USR_RTT_DEBUG	1			//为1时，使用RTT输出printf；为0时，使用串口输出printf
@@ -208,6 +209,7 @@ typedef struct FLAG_
 	unsigned char NeedSendUpgResult:1;			//需要发送升级结果
 	unsigned char NeedSendResponse:1;			//需要应答服务器消息
 	unsigned char NeedResponseFrist:1;			//某些下发指令需要先应答后再执行
+	unsigned char NeedGetBatVoltage:1;			//需要检测电池电压ADC值
 
 }FLAG;
 #endif

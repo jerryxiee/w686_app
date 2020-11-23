@@ -288,7 +288,7 @@ void UART_Handle(void)
 		{	
 			i++;
 			UART_Send(AT_PORT, At_test_buf, strlen((char *)At_test_buf));	
-			TIMER_DelayMs(500);
+			delay_ms(500);
 			if(i > 50)
 			{
 				NeedModuleReset = MODUAL_INFO_ERROR;
@@ -415,7 +415,7 @@ void Usr_USART3_UART_Init(void)
 
 	LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_USART3);
 
-	LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOD);
+	LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOB);
 	
 
 	/*  USART3 GPIO Configuration  
@@ -428,7 +428,7 @@ void Usr_USART3_UART_Init(void)
 	GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
 	GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
 	GPIO_InitStruct.Alternate = LL_GPIO_AF_4;
-	LL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+	LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 	/* USART3 interrupt Init */
 	NVIC_SetPriority(USART3_4_IRQn, 1);
