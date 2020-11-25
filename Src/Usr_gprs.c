@@ -388,15 +388,14 @@ u16 Mqtt_SendPacket(GPRS_TYPE switch_tmp)
 			strcat(GprsContent, "upgrade finish!");
 		}
 		sprintf(GprsSendBuf,
-				"{\"to\":\"IoT/imei:%s/default\",\"op\":1,\"pc\":{\"m2m:cin\":{\"con\":{%s}}},\
+				"{\"to\":\"IoT/imei:%s/default\",\"op\":1,\"pc\":{\"m2m:cin\":{\"con\":\"%s\"}},\
 \"fr\":\"IoT/imei:%s\",\"rqi\":\"imei:%s_20200623185648_001\",\"ty\":4,\"rt\":2}",
 				IMEI, GprsContent, IMEI, IMEI);
 		break;
 
 		case RESPONSE:
-
 		sprintf(GprsSendBuf,
-				"{\"to\":\"IoT/imei:%s/default\",\"op\":1,\"pc\":{\"m2m:cin\":{\"con\":{%s}}},\
+				"{\"to\":\"IoT/imei:%s/default\",\"op\":1,\"pc\":{\"m2m:cin\":{\"con\":\"%s\"}},\
 \"fr\":\"IoT/imei:%s\",\"rqi\":\"imei:%s_20200623185648_001\",\"ty\":4,\"rt\":2}",
 				IMEI, RespServiceBuf, IMEI, IMEI);	
 		break;
@@ -589,7 +588,7 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 				}
 				#endif
 
-				printf("Need upgrade the device,upgrade file name is: %s",FsUpg.AppFilePath);
+				printf("Need upgrade the device,upgrade file name is: %s\r\n",FsUpg.AppFilePath);
 				sprintf(RespServiceBuf,"Fota file name is :%s,ready upgrade...",FsUpg.AppFilePath);
 
 				//提取MD5校验
@@ -605,6 +604,7 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 
 				UpgInfo.NeedUpdata = 1;				//需要开始升级
 				Flag.NeedResponseFrist = 1;			//需要首先应答平台消息后在开始升级
+				Flag.NeedSendResponse = 1;
 				UpgInfo.RetryCnt = 2;				//升级失败重复次数
 			}
 			//设置FOTA升级允许

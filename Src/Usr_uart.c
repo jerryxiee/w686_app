@@ -573,12 +573,6 @@ void USART1_IRQHandler(void)
 		{
 			Uart1Buf[Uart1Index++]=tmp;   
 		}
-
-		if (strstr(Uart1Buf, "NORMAL POWER DOWN") && !Flag.ModePwrDownNormal)
-		{
-			Flag.ModePwrDownNormal = 1;
-			printf("\r\nNORMAL POWER DOWN!\r\n");
-		}
 	}
 }
 
