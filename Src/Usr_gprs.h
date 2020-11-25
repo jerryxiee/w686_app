@@ -24,13 +24,14 @@ typedef enum{
 #define TFTPLEN    		30
 #define GPRSCONTLEN		200
 
-#define USR_FOR_JP		0				//切换在中国使用和日本使用开关，0为中国使用，1为日本使用
+#define USR_FOR_JP		1				//切换在中国使用和日本使用开关，0为中国使用，1为日本使用
 #define SENSOR_3		1
 #define NO_SLEEP		1
 
 #if USR_FOR_JP
-	#define IMEI_MANUAL	    ""
-	#define JP_AT_USE		1
+//	#define IMEI_MANUAL	    ""
+	#define IMEI_MANUAL	"999999999999999"
+	#define JP_AT_USE		0
 	#define USE_SOFTSIM		0
 #else
 	//#define IMEI_MANUAL	"352656103523604"

@@ -189,8 +189,11 @@ void FS_UpdateValue(void)
 	Fs_len = sizeof(Fs);
 	if((Fs_len % 8) != 0)
 	{
-		Fs_len = Fs_len/8 + 1;
+		STMFLASH_WriteFs(FLASH_SAVE_ADDR, (u64 *)&Fs, Fs_len/8 + 1);
+	}
+	else
+	{
+		STMFLASH_WriteFs(FLASH_SAVE_ADDR, (u64 *)&Fs, Fs_len/8);
 	}
 	printf("Updata the Fs value\r\n");
-	STMFLASH_WriteFs(FLASH_SAVE_ADDR, (u64 *)&Fs, Fs_len);
 }

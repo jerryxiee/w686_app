@@ -5,4 +5,5 @@
 
 void Usr_DeviceContral(void);
 
+extern unsigned char NoAckRstCnt;
 #endif 

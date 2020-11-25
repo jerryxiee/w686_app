@@ -237,6 +237,8 @@ void At_Receive(void)
 			Test.GetModuleAti = 1;
 		}
 	}
+
+	#if 0
 	//提起模块的IMEI
 	if ((p1 = strstr(Uart1Buf, "IMEI:")) != NULL)
 	{
@@ -250,6 +252,7 @@ void At_Receive(void)
 			Test.GetIMEI = 1;
 		}
 	}
+	#endif
 
 }
 
@@ -293,6 +296,7 @@ void UART_Handle(void)
 			{
 				NeedModuleReset = MODUAL_INFO_ERROR;
 				Flag.NeedWakeMdByAt = 0;
+				i = 0;
 			}
 		}
 		else
@@ -300,6 +304,8 @@ void UART_Handle(void)
 			Flag.NeedWakeMdByAt = 0;
 			Flag.RcvAtAckOK = 0;
 			Flag.ModuleOn = 1;
+			NoAckRstCnt = 0;
+			i = 0;
 		}
 	}
 }
@@ -566,6 +572,12 @@ void USART1_IRQHandler(void)
 		if(Uart1Index < sizeof(Uart1Buf)) 
 		{
 			Uart1Buf[Uart1Index++]=tmp;   
+		}
+
+		if (strstr(Uart1Buf, "NORMAL POWER DOWN") && !Flag.ModePwrDownNormal)
+		{
+			Flag.ModePwrDownNormal = 1;
+			printf("\r\nNORMAL POWER DOWN!\r\n");
 		}
 	}
 }

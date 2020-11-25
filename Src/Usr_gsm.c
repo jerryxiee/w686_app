@@ -1,7 +1,7 @@
 #include "usr_main.h"
 
-unsigned char ResetMouldeCnt_1; //模块因为没有信号重启次数
-
+unsigned char ResetMouldeCnt_1; 		//模块因为没有信号重启次数
+unsigned char NoAckRstCnt;				//模块连续因为没有开机应答重启次数，达到5次后重启设备
 
 
 
@@ -109,6 +109,7 @@ void Usr_ModuleTurnOn(void)
 	POWER_OFF;
 	delay_ms(1000);
 
+
 	POWER_ON; 		
 	while (i--)
 	{
@@ -172,7 +173,9 @@ void Usr_ModuleTurnOff(void)
 		{
 			POWER_OFF;
 			GREEN_OFF;
-			delay_ms(500);
+			delay_ms(1000);			//关闭时间延长到2秒，确保模块彻底断点
+			delay_ms(1000);
+			delay_ms(1000);
 			Flag.HavePwdMode = 0;
 			printf("\r\nModule turn off!\r\n");
 		}
@@ -208,6 +211,13 @@ void Usr_ModuleReset(void)
 		else if(NeedModuleReset == MODUAL_INFO_ERROR)
 		{
 			printf("SIM7080G turn on but no ack,need restart module\r\n");
+			NoAckRstCnt ++;
+			if(NoAckRstCnt > 5)
+			{
+				printf("\r\nSIM7080G turn on and no ack over 5 timers,restart device!\r\n");
+				Flag.NeedDeviceRst = 1;
+				return;
+			}
 		}
 		else if(NeedModuleReset == MODUAL_NOACK)
 		{

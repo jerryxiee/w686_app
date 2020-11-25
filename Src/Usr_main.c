@@ -18,7 +18,7 @@ const unsigned char SoftwareBuilt[50] = {0};
 char Edition[50] = {0};
 
 
-char Edition_STD[50] = {"w868_SIM7080G_V0.0.3"};				//程序的稳定版本，手动设置版本型号
+char Edition_STD[50] = {"w868_SIM7080G_V0.0.4"};				//程序的稳定版本，手动设置版本型号
 char HardWare_Edition[50] = {"TY197_MAIN_V1.0"};		//硬件版本，手动设置版本型号
 
 u8 Built_year[5] = {'\0'};
@@ -189,7 +189,7 @@ void Flag_Check(void)
 	{
 		Flag.NeedGetBatVoltage = 0;
 		BatVoltage_Adc = Adc_Value_Get();
-		BatVoltage_Adc = BatVoltage_Adc * 3;		//转换成电池电压
+		BatVoltage_Adc = BatVoltage_Adc * 34/10;		//转换成电池电压,x3.2
 		printf("The battery voltage is %d mv\r\n",BatVoltage_Adc);
 	}
 	

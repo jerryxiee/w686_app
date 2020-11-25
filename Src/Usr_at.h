@@ -42,7 +42,7 @@ typedef struct{
 #define CANT_ATTACH_NET			1		//无法附着到网络
 #define CONNECT_SERVICE_FAILED	2		//连接服务器过程中出错
 #define NO_SIMCARD				3		//没有SIM卡或者SIM卡检测出错
-#define MODUAL_INFO_ERROR		4		//其他读取模块信息出错
+#define MODUAL_INFO_ERROR		4		//开机后无法应答AT指令，开机不成功
 #define MODUAL_NOACK			5		//模块超过三次无应答
 
 extern AT_TYPE  AtType;

@@ -1,6 +1,6 @@
 #include "usr_main.h"
 
-#define USR_TEST_PLAM		0		//使用测试服
+#define USR_TEST_PLAM		1		//使用测试服
 
 AT_TYPE AtType; 					//给AtType赋值的函数要在没有AT指令通信时调用，
 									//赋值语句后要有break或return,以免影响同函数其它对AtType的赋值
@@ -186,21 +186,18 @@ void AT_SendPacket(AT_TYPE temType, char *pDst)
 	  	if(GprsType != BKDATA)		
 		{
 			GprsDataLen = Mqtt_SendPacket(GprsType);
-			#if USR_TEST_PLAM
-			sprintf(pDst,"AT+SMPUB=\"/oneM2M/req/C58D391E4-%s/CSE1000/json\",%d,1,1\r\n",IMEI,GprsDataLen);
-			#else
-			sprintf(pDst,"AT+SMPUB=\"/oneM2M/req/CDA68B264-%s/CSE1000/json\",%d,1,1\r\n",IMEI,GprsDataLen);
-			#endif
 		}					
 		else
 		{
 			GprsDataLen = Breakpointleng;
-			#if USR_TEST_PLAM
-			sprintf(pDst,"AT+SMPUB=\"/oneM2M/req/C58D391E4-%s/CSE1000/json\",%d,1,1\r\n",IMEI,GprsDataLen);
-			#else
-			sprintf(pDst,"AT+SMPUB=\"/oneM2M/req/CDA68B264-%s/CSE1000/json\",%d,1,1\r\n",IMEI,GprsDataLen);
-			#endif
 		}
+
+		#if USR_TEST_PLAM
+		sprintf(pDst,"AT+SMPUB=\"/oneM2M/req/C58D391E4-%s/CSE1000/json\",%d,1,1\r\n",IMEI,GprsDataLen);
+		#else
+		sprintf(pDst,"AT+SMPUB=\"/oneM2M/req/CDA68B264-%s/CSE1000/json\",%d,1,1\r\n",IMEI,GprsDataLen);
+		#endif
+
 		At_Timeout_Cnt = 300; 					//连接时间有时需要等待很久，这里最多等待150秒
 		break;
 	case AT_GPRSEND:
@@ -211,14 +208,14 @@ void AT_SendPacket(AT_TYPE temType, char *pDst)
 		#if USR_TEST_PLAM
 		sprintf(pDst, "AT+SMSUB=\"/oneM2M/req/CSE1000/C58D391E4-%s/json\",1\r\n",IMEI);
 		#else
-		sprintf(pDst, "AT+SMSUB=\"/oneM2M/req/CDA68B264-%s/CSE1000/json\",1\r\n",IMEI);
+		sprintf(pDst, "AT+SMSUB=\"/oneM2M/req/CSE1000/CDA68B264-%s/json\",1\r\n",IMEI);
 		#endif
 		break;
 	case AT_SMUNSUB:							//取消订阅消息
 		#if USR_TEST_PLAM
 		sprintf(pDst, "AT+SMUNSUB=\"/oneM2M/req/CSE1000/C58D391E4-%s/json\"\r\n",IMEI);
 		#else
-		sprintf(pDst, "AT+SMUNSUB=\"/oneM2M/req/CDA68B264-%s/CSE1000/json\"\r\n",IMEI);
+		sprintf(pDst, "AT+SMUNSUB=\"/oneM2M/req/CSE1000/CDA68B264-%s/json\"\r\n",IMEI);
 		#endif
 		break;
 	case AT_SMDISC:								//断开MQTT连接
@@ -438,6 +435,7 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 
 	case AT_ATI:
 		//提取模块的版本信息
+		#if 0
 		if ((p1 = strstr(pSrc, "APRev:")) != NULL)
 		{
 			p1 += 6;
@@ -463,6 +461,10 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 				Test.GetIMEI = 1;
 			}
 		}	
+		#endif
+		*temType = AT_NULL;
+		AtDelayCnt = 0;
+		back = 1;
 		break;
 
 	case AT_CCID:
