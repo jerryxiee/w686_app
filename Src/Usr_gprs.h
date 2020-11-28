@@ -27,6 +27,7 @@ typedef enum{
 #define USR_FOR_JP		0				//切换在中国使用和日本使用开关，0为中国使用，1为日本使用
 #define SENSOR_3		1
 #define NO_SLEEP		1
+#define USR_TEST_PLAM		1		//使用测试服
 
 #if USR_FOR_JP
 	#define IMEI_MANUAL	    ""
@@ -60,7 +61,7 @@ extern char GprsSendBuf[DATABUFLEN];
 extern char AtSendbuf[SCIBUFLEN];
 extern char UpgradeSendBuf[UPDRADELEN];
 extern char UserIDBuf[16];
-
+extern char RespServiceBuf[100];
 extern char CCID[21];
 extern char IMEI[16];	
 

@@ -1,7 +1,5 @@
 #include "usr_main.h"
 
-#define USR_TEST_PLAM		1		//使用测试服
-
 AT_TYPE AtType; 					//给AtType赋值的函数要在没有AT指令通信时调用，
 									//赋值语句后要有break或return,以免影响同函数其它对AtType的赋值
 AT_ERROR AtError;

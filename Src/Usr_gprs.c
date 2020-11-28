@@ -543,6 +543,7 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 {
 	char *p0 = NULL;
 	char *p1 = NULL;
+	char fota_type = 0;
 	char gprs_content[100] = {0};
 
 	p0 = strstr(pSrc,"\"con\":");
@@ -560,6 +561,19 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 			//远程升级：c18:4-W686IB_V0.0.1.bin-9caf17aecfcf907bc85ad1c187cb255b
 			if(p0 == strstr(p0,"c18"))
 			{
+				p0 == strstr(p0,":");
+				p0 ++;
+				fota_type = *p0;
+
+				if((fota_type != '1')&&(fota_type != '4'))
+				{
+					printf("c18 data format error!\r\n");
+					UpgInfo.UpgrateFail = 1;
+					strcpy(FsUpg.HttpError,"Illegal file name!");
+					return;					
+				}
+
+
 				Flag.NeedSendResponse = 0;		//这里使用远程升级结果回复，不需要通用结果重复回复
 
 				if(Fs.FotaSwitch == 0xAA)		//如果不允许远程升级，上报服务器
@@ -588,9 +602,6 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 				}
 				#endif
 
-				printf("Need upgrade the device,upgrade file name is: %s\r\n",FsUpg.AppFilePath);
-				sprintf(RespServiceBuf,"Fota file name is :%s,ready upgrade...",FsUpg.AppFilePath);
-
 				//提取MD5校验
 				p0 = p1 + 1;
 				memset(Md5FileAsc,0,sizeof(Md5FileAsc));
@@ -602,10 +613,24 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 
 				MD5Init(&Upgmd5);  					//初始化MD5
 
-				UpgInfo.NeedUpdata = 1;				//需要开始升级
-				Flag.NeedResponseFrist = 1;			//需要首先应答平台消息后在开始升级
-				Flag.NeedSendResponse = 1;
-				UpgInfo.RetryCnt = 2;				//升级失败重复次数
+				if(fota_type == '4')
+				{
+					UpgInfo.NeedUpdata = 1;				//需要开始升级
+					Flag.NeedResponseFrist = 1;			//需要首先应答平台消息后在开始升级
+					Flag.NeedSendResponse = 1;
+					UpgInfo.RetryCnt = 2;				//升级失败重复次数
+
+					printf("Need upgrade the device,upgrade file name is: %s\r\n",FsUpg.AppFilePath);
+					sprintf(RespServiceBuf,"Fota file name is :%s,ready upgrade...",FsUpg.AppFilePath);
+				}
+				else if(fota_type == '1')
+				{
+					Flag.NeedSendResponse = 1;
+					UpgInfo.NeedWaitUpgrade = 1;
+					sprintf(RespServiceBuf,"Fota file name is :%s,wait to upgrade...",FsUpg.AppFilePath);
+				}
+				
+
 			}
 			//设置FOTA升级允许
 			else if(p0 == strstr(p0,"c17"))
@@ -652,7 +677,7 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 				}
 			}
 			//修改上传时间间隔
-			else if(p0 == strstr(p0,"c4"))
+			else if(p0 == strstr(p0,"c22"))
 			{
 				p0 += 3;
 				p1 = strstr(p0,"\"}}");

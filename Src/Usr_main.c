@@ -195,6 +195,19 @@ void Flag_Check(void)
 		BatVoltage_Adc = BatVoltage_Adc * 34/10;		//转换成电池电压,x3.2
 //		printf("The battery voltage is %d mv\r\n",BatVoltage_Adc);
 	}
+
+	if((UpgInfo.NeedWaitUpgrade)&&(Rtc.hour == 1))
+	{
+		UpgInfo.NeedWaitUpgrade = 0;
+
+		UpgInfo.NeedUpdata = 1;				//需要开始升级
+		Flag.NeedResponseFrist = 1;			//需要首先应答平台消息后在开始升级
+		Flag.NeedSendResponse = 1;
+		UpgInfo.RetryCnt = 2;				//升级失败重复次数
+
+		printf("Need upgrade the device,upgrade file name is: %s\r\n",FsUpg.AppFilePath);
+		sprintf(RespServiceBuf,"Fota file name is :%s,ready upgrade...",FsUpg.AppFilePath);
+	}
 	
 }
 
