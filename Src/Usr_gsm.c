@@ -2,7 +2,7 @@
 
 unsigned char ResetMouldeCnt_1; 		//模块因为没有信号重启次数
 unsigned char NoAckRstCnt;				//模块连续因为没有开机应答重启次数，达到5次后重启设备
-
+unsigned char NoSimCardCnt;				//模块因为NOSIM卡重启次数，达到三次后不再重启，需要装卡后重启系统
 
 
 void Usr_ModuleGoSleep(void)
@@ -21,8 +21,8 @@ void Usr_ModuleGoSleep(void)
 	Flag.ModuleSleep = 1;
 	Flag.IrNoNeedWakeUp = 1;
 
-	GREEN_OFF;
-	RED_OFF;
+	LED_NET_GREEN_OFF;
+	LED_NET_RED_OFF;
 	MODULE_WAKEUP_RESET;
 	SHT31_POWER_EN_SET;
 
@@ -166,13 +166,19 @@ void Usr_ModuleTurnOff(void)
 	ModePwrDownCnt = 10;
 	AtType = AT_NULL;
 
-	GREEN_ON;
+	LED_NET_GREEN_ON;
 	while (Flag.HavePwdMode)
 	{
+		if (strstr(Uart1Buf, "NORMAL POWER DOWN") && !Flag.ModePwrDownNormal)
+		{
+			Flag.ModePwrDownNormal = 1;
+			printf("\r\nNORMAL POWER DOWN!\r\n");
+		}
+		
 		if ((ModePwrDownCnt <= 0) || Flag.ModePwrDownNormal)
 		{
 			POWER_OFF;
-			GREEN_OFF;
+			LED_NET_GREEN_OFF;
 			delay_ms(1000);			//关闭时间延长到2秒，确保模块彻底断点
 			delay_ms(1000);
 			delay_ms(1000);
@@ -206,6 +212,7 @@ void Usr_ModuleReset(void)
 		}
 		else if(NeedModuleReset == NO_SIMCARD)
 		{
+			NoSimCardCnt ++;
 			printf("Didn't read SIM card,need restart GSM module\r\n");
 		}
 		else if(NeedModuleReset == MODUAL_INFO_ERROR)
@@ -248,7 +255,7 @@ void Usr_DevicePwrHandle(void)
 		Flag.NeedClrValueFile = 0;
 		printf("Set parametert to factory\r\n");
 		FS_FactroyValueFile();
-		WaitRestart = 10;		//最长秒后重启
+		WaitRestart = 5;		//最长5秒后重启
 		return;
 	}
 

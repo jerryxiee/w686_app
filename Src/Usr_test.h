@@ -22,7 +22,6 @@ typedef struct{
     unsigned char   GetRiAction:1;      //检测到RI触发
     unsigned char   GetDeviceInfo:1;    //获取到设备配置信息
     unsigned char   GsmModuleOk:1;      //GSM模块测试OK（可以正常识别SIM及搜索到CSQ）
-
     unsigned char   ExflashTestOver:1;  //外部flash读写测试完成
     unsigned char   NeedCheckATI:1;     //需要查询模块的ATI
 
@@ -31,6 +30,7 @@ typedef struct{
     unsigned char 	WaitRiAction;		//等待
 	unsigned char 	TestStep;			//测试到哪一步，这个值需要初始化为0xFF
     unsigned char   TestOverStep;       //测试完成到哪一步，配合TestStep来实现不重复发送测试结果
+    unsigned char   ShowResultCnt;      //通过LED灯显示测试结果保持时间
 }TEST;
 #endif
 

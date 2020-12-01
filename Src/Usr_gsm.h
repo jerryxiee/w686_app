@@ -6,4 +6,6 @@
 void Usr_DeviceContral(void);
 
 extern unsigned char NoAckRstCnt;
+extern unsigned char NoSimCardCnt;	
+
 #endif 

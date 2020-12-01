@@ -97,6 +97,9 @@ static void FS_FactroyValue(void)
 	Fs.Sensor = 4;
 	Fs.FotaSwitch = 0x01;
 	Flag.HaveGetMccMnc = 0;
+	Fs.HaveSetMode = 0;
+	Fs.Co2WarnThreshold = 1000;
+	Fs.Co2AlarmThreshold = 1500;
 }
 
 void FSUPG_FactroyValue(void)

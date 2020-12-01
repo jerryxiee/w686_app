@@ -12,9 +12,9 @@ unsigned char ResetLeftCnt; //该变量为重启设备倒计时。被赋值之�
 unsigned int AtDelayCnt; 	//AT指令发送成功后延时多久发送下一条指令，通常AT指令处理处理完成后会清零该位，取消等待
 unsigned short IntervalTemp; //用来暂存定时上传时间间隔
 unsigned char WaitRestart;		//等待一段时间后重启，用于某些时候需要先发送GPRS数据后再重启
-
+unsigned char ConnectGprsCnt;	//连接到服务器计时，用于连接服务器15秒后关闭网络led灯
 unsigned char AT_CBC_IntervalTemp; 	//电池电量采样间隔
-
+unsigned char FactoryCnt;		//恢复出厂设置按键按下计数器
 
 const unsigned char arr_nDays[12] = 	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 const unsigned char Leap_month_day[12]=	{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}; //闰年 
@@ -151,18 +151,43 @@ void TIMER_SecCntHandle(void)
 		}
 	}
 
-	if((baseTimeSec % 30 == 0) && (Flag.InCharging == 0))
+	if((Flag.GprsConnectOk) && (ConnectGprsCnt < 15))
 	{
-		Flag.SensorLed = 1;
-		Flag.NeedGetBatVoltage = 1;
+		ConnectGprsCnt ++;
+	}
+	else if(!Flag.GprsConnectOk)
+	{
+		ConnectGprsCnt = 0;
 	}
 
-	if(baseTimeSec % 3 == 0) 
+	if((baseTimeSec % 15 == 0) && (Flag.BattLow == 1))
+	{
+		Flag.LowBatLed = 1;
+	}
+
+	if((baseTimeSec % 5 == 0) && (Flag.Co2SensorError || Flag.SHT3xSensorError))
+	{
+		Flag.SensorErrorLed = 1;
+	}
+
+	if(baseTimeSec % 5 == 0) 
 	{
 		Flag.NeedGetBatVoltage = 1;
 	}
 	
-	
+	if(FACTORY_BUTTON == 0)
+	{
+		FactoryCnt ++;
+		if(FactoryCnt >= 3)
+		{
+			Flag.NeedClrValueFile = 1;
+		}
+	}
+	else
+	{
+		FactoryCnt = 0;
+	}
+
 	WatchDogCnt++;
 	if (WatchDogCnt > 30)
 	{
@@ -221,6 +246,11 @@ void TIMER_SecCntHandle(void)
 		Flag.Bma250NeedInit = 1; //查振动传感器状态
 	}
 	
+	if ((baseSecCnt % 4 == 0) && (Test.InTesting))
+	{
+		Flag.CsqChk = 1;		 //查信号强度
+	}
+
 	//如果设备没有附着上网络，10秒检测一次CGREG
 	if(Flag.PsSignalOk == 0)	
 	{	
@@ -303,6 +333,10 @@ void TIMER_SecCntHandle(void)
 		sensor_type = 0xFE;			
 	}
 
+	if(Test.ShowResultCnt > 0)
+	{
+		Test.ShowResultCnt --;
+	}
 
 	if (!Flag.NoSleep && ActiveTimer > 0 && !Flag.IsUpgrate)
 	{
@@ -363,87 +397,177 @@ void TIMER_BaseCntHandle(void)
 		Uart4RecCnt--;
 	}
 
-	if (++ledCnt > 32)
+	if (++ledCnt > 31)
 		ledCnt = 0; //周期为4s
 
 	if(Test.WaitTestCnt > 0)
 	{
 		Test.WaitTestCnt --;
 	}
+	if((Test.TestStep != 0xFF) && (Test.TestOver == 0) && (Test.ShowResultCnt == 0))
+	{
+		LED_NET_RED_ON;
+		LED_NET_GREEN_ON;
+		LED_NET_BLUE_ON;
 
+		LED_SENSOR_RED_ON;
+		LED_SENSOR_GREEN_ON;
+		LED_SENSOR_BLUE_ON;	
+
+		return;
+	}
+
+	if(Test.ShowResultCnt > 0)
+	{
+		return;
+	}
+
+	//sensor灯逻辑
+	if(Flag.Co2SensorError || Flag.SHT3xSensorError)
+	{
+		if(Flag.SensorErrorLed)
+		{
+			Flag.SensorErrorLed = 0;
+			LED_SENSOR_RED_ON;
+			LED_SENSOR_GREEN_OFF;
+			LED_SENSOR_BLUE_OFF;
+		}
+		else
+		{
+			LED_SENSOR_RED_OFF;
+			LED_SENSOR_GREEN_OFF;
+			LED_SENSOR_BLUE_OFF;		
+		}
+
+	}
+	else if (co2_module_value > Fs.Co2AlarmThreshold)
+	{
+		LED_SENSOR_RED_ON;
+		LED_SENSOR_GREEN_OFF;
+		LED_SENSOR_BLUE_OFF;
+	}
+	else if (co2_module_value > Fs.Co2WarnThreshold)
+	{
+		LED_SENSOR_RED_OFF;
+		LED_SENSOR_GREEN_ON;
+		LED_SENSOR_BLUE_ON;
+	}
+	else if (co2_module_value <= Fs.Co2WarnThreshold)
+	{
+		LED_SENSOR_RED_OFF;
+		LED_SENSOR_GREEN_ON;
+		LED_SENSOR_BLUE_OFF;
+	}
+
+	//网络灯逻辑
 	if (Flag.ModuleSleep)
 	{
-		RED_OFF; 
-		GREEN_OFF;
+		LED_NET_RED_OFF; 
+		LED_NET_GREEN_OFF;
+		LED_NET_BLUE_OFF;
+	}
+	else if(Flag.NoSimCard)		//没有SIM卡时，常亮红灯
+	{
+		LED_NET_RED_ON; 
+		LED_NET_GREEN_OFF;
+		LED_NET_BLUE_OFF;		
 	}
 	else if (Flag.IsUpgrate)
 	{
-		RED_NEG;
-		GREEN_OFF;
+		LED_NET_RED_OFF;
+		LED_NET_GREEN_OFF;
+
+		if(ledCnt%2 == 0)
+		{
+			LED_NET_BLUE_ON;
+		}
+		else
+		{
+			LED_NET_BLUE_OFF;
+		}		
 	}
 
-	else if(Flag.InCharging)
-	{
-		if (co2_module_value >= CO2_ALARM_THRESHOLD)
-		{
-			RED_ON;
-			GREEN_OFF;
-		}
-		else 
-		{
-			RED_OFF;
-			GREEN_ON;
-		}
-	}
+	// else if(Flag.InCharging)
+	// {
+	// 	if (co2_module_value >= Fs.Co2AlarmThreshold)
+	// 	{
+	// 		LED_NET_RED_ON;
+	// 		LED_NET_GREEN_OFF;
+	// 	}
+	// 	else 
+	// 	{
+	// 		LED_NET_RED_OFF;
+	// 		LED_NET_GREEN_ON;
+	// 	}
+	// }
 
 	else
 	{
 		switch (ledCnt)
 		{
 		case 0:
-//			GREEN_ON;
-			break;
-		case 4:
-			if (Flag.GprsConnectOk == 0)
-//				GREEN_ON;
-			break;
-		case 6:
-			if (Flag.BattLow)
-				RED_ON;
-			break;
-		case 8:
-			if (Flag.BattLow)
-			{
-				RED_ON;
-			}
+			if(ConnectGprsCnt >= 15)
 			break;
 
-		case 11:
-			if (!Flag.HaveDcIn)
-				RED_OFF;
-			break;
-		case 13:
-			if(Flag.SensorLed)
+			if(Flag.PsSignalOk == 0)
 			{
-				Flag.SensorLed = 0;
-				if (co2_module_value > CO2_ALARM_THRESHOLD)
-				{
-					RED_ON;
-				}
-				else if(co2_module_value >= 400)
-				{
-					GREEN_ON;
-				}
+				LED_NET_RED_ON;
+				LED_NET_GREEN_OFF;
+				LED_NET_BLUE_ON;
 			}
+			else if((Flag.PsSignalOk)&&(Flag.GprsConnectOk == 0))
+			{
+				LED_NET_RED_ON;
+				LED_NET_GREEN_ON;
+				LED_NET_BLUE_ON;			
+			}
+			else if(Flag.GprsConnectOk)
+			{
+				LED_NET_RED_OFF;
+				LED_NET_GREEN_ON;
+				LED_NET_BLUE_ON;			
+			}			
+			break;
+		case 4:
+			if(Flag.LowBatLed)
+			{
+				LED_NET_RED_ON;
+				LED_NET_GREEN_OFF;
+				LED_NET_BLUE_OFF;					
+			}
+			break;
+		case 6:
 
 			break;
 		case 16:
-			if (!Flag.HaveDcIn)
-				RED_OFF;
+			if(ConnectGprsCnt >= 15)
 			break;
+
+			if(Flag.PsSignalOk == 0)
+			{
+				LED_NET_RED_ON;
+				LED_NET_GREEN_OFF;
+				LED_NET_BLUE_ON;
+			}
+			else if((Flag.PsSignalOk)&&(Flag.GprsConnectOk == 0))
+			{
+				LED_NET_RED_ON;
+				LED_NET_GREEN_ON;
+				LED_NET_BLUE_ON;			
+			}
+			else if(Flag.GprsConnectOk)
+			{
+				LED_NET_RED_OFF;
+				LED_NET_GREEN_ON;
+				LED_NET_BLUE_ON;			
+			}
+			break;
+
+
 		default:
-			GREEN_OFF;
-			RED_OFF;
+			LED_NET_RED_OFF;
+			LED_NET_GREEN_OFF;
+			LED_NET_BLUE_OFF;
 			break;
 		}
 	}

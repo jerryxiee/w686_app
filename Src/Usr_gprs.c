@@ -307,14 +307,14 @@ u16 Mqtt_SendPacket(GPRS_TYPE switch_tmp)
 		sprintf(Temp, "\"%d\",", Timestamp);
 		strcat(GprsContent, Temp);
 
-		strcat(GprsContent, "a1:"); //时区
-		strcat(GprsContent, "\"GMT+8\",");
+		// strcat(GprsContent, "a1:"); //时区
+		// strcat(GprsContent, "\"GMT+8\",");
 
-		strcat(GprsContent, "a2:"); //公司名称
-		strcat(GprsContent, "\"IOTBANK\",");
+		// strcat(GprsContent, "a2:"); //公司名称
+		// strcat(GprsContent, "\"IOTBANK\",");
 
 		strcat(GprsContent, "a3:"); //产品名称
-		strcat(GprsContent, "\"W686B\",");
+		strcat(GprsContent, "\"W686A\",");
 
 		strcat(GprsContent, "a4:"); //IMEI
 		sprintf(Temp, "\"%s\",", IMEI);
@@ -340,13 +340,13 @@ u16 Mqtt_SendPacket(GPRS_TYPE switch_tmp)
 		sprintf(Temp, "\"%d\",", Timestamp);
 		strcat(GprsContent, Temp);
 
-		strcat(GprsContent, "b0:"); //电池电量
-		sprintf(Temp, "\"%d\",", bat_percente);
-		strcat(GprsContent, Temp);
+		// strcat(GprsContent, "b0:"); //电池电量
+		// sprintf(Temp, "\"%d\",", bat_percente);
+		// strcat(GprsContent, Temp);
 
-		strcat(GprsContent, "b1:"); //充电状态
-		sprintf(Temp, "\"%s\",", NotSupport);
-		strcat(GprsContent, Temp);
+		// strcat(GprsContent, "b1:"); //充电状态
+		// sprintf(Temp, "\"%s\",", NotSupport);
+		// strcat(GprsContent, Temp);
 
 		strcat(GprsContent, "s1:"); //湿度
 		sprintf(Temp, "\"%.1f\",", humidity_value);
@@ -360,13 +360,13 @@ u16 Mqtt_SendPacket(GPRS_TYPE switch_tmp)
 		sprintf(Temp, "\"%.1f\",", temperature_value);
 		strcat(GprsContent, Temp);
 
-		strcat(GprsContent, "s4:"); //红外
-		sprintf(Temp, "\"%d\",", ir_value);
-		strcat(GprsContent, Temp);
+		// strcat(GprsContent, "s4:"); //红外
+		// sprintf(Temp, "\"%d\",", ir_value);
+		// strcat(GprsContent, Temp);
 
-		strcat(GprsContent, "s5:"); //tvoc
-		sprintf(Temp, "\"%d\"", ccs811_tvoc_value);
-		strcat(GprsContent, Temp);
+		// strcat(GprsContent, "s5:"); //tvoc
+		// sprintf(Temp, "\"%d\"", ccs811_tvoc_value);
+		// strcat(GprsContent, Temp);
 
 		sprintf(GprsSendBuf,
 				"{\"to\":\"IoT/imei:%s/default\",\"op\":1,\"pc\":{\"m2m:cin\":{\"con\":{%s}}},\
@@ -561,7 +561,7 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 			//远程升级：c18:4-W686IB_V0.0.1.bin-9caf17aecfcf907bc85ad1c187cb255b
 			if(p0 == strstr(p0,"c18"))
 			{
-				p0 == strstr(p0,":");
+				p0 = strstr(p0,":");
 				p0 ++;
 				fota_type = *p0;
 
@@ -633,7 +633,7 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 
 			}
 			//设置FOTA升级允许
-			else if(p0 == strstr(p0,"c17"))
+			else if(p0 == strstr(p0,"c17:"))
 			{
 				p0 += 4;
 				if(*p0 == '1')				//开启FOTA
@@ -655,77 +655,129 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 				}
 			}
 			//重启和关机命令
-			else if(p0 == strstr(p0,"c8"))
+			else if(p0 == strstr(p0,"c8:"))
 			{
 				p0 += 3;
 				if(*p0 == '1')			
 				{
 					Flag.NeedDeviceRst = 1;
 					Flag.NeedResponseFrist = 1;	
-					strcpy(RespServiceBuf,"Ready restart device");
+					strcpy(RespServiceBuf,"c8:1");
 				}
 				else if(*p0 == '0')
 				{
 					Flag.NeedShutDown = 1;	
 					Flag.NeedResponseFrist = 1;		
-					strcpy(RespServiceBuf,"Ready power off device");		
+					strcpy(RespServiceBuf,"c8:0");		
 				}
 				else
 				{
 					printf("\r\nc8 data format incorrect!\r\n");
-					strcpy(RespServiceBuf,"c8 data format incorrect!");	
+				//	strcpy(RespServiceBuf,"c8 data format incorrect!");	
+					Flag.NeedSendResponse = 0;		//数据格式错误不回复
 				}
 			}
 			//修改上传时间间隔
-			else if(p0 == strstr(p0,"c22"))
+			else if(p0 == strstr(p0,"c22:"))
 			{
-				p0 += 3;
+				unsigned short Interval_Temp = 0;
+				p0 += 4;
 				p1 = strstr(p0,"\"}}");
 
 				if(p1 - p0 <= 7)				//开启FOTA
 				{
-					Fs.Interval = Ascii2BCD_u16(p0, p1-p0);
-					if(Fs.Interval < 5)
+					Interval_Temp = Ascii2BCD_u16(p0, p1-p0);
+					if(Interval_Temp < 5)
 					{
-						strcpy(RespServiceBuf,"c4 data format incorrect!");
+//						strcpy(RespServiceBuf,"c22 data format incorrect!");
+						Flag.NeedSendResponse = 0;		//数据格式错误不回复
 						return;
 					}
-					IntervalTemp = Fs.Interval;
+
+					Fs.Interval = Interval_Temp;
+					IntervalTemp = Interval_Temp;
+					
 					Flag.NeedUpdateFs = 1;	
-					sprintf(RespServiceBuf,"Change interval to %ds",Fs.Interval);
+					sprintf(RespServiceBuf,"c22:%d",Fs.Interval);
 				}
 				else
 				{
-					printf("\r\nc4 data format incorrect!\r\n");
-					strcpy(RespServiceBuf,"c4 data format incorrect!");	
+					printf("\r\nc22 data format incorrect!\r\n");
+//					strcpy(RespServiceBuf,"c22 data format incorrect!");	
+					Flag.NeedSendResponse = 0;		//数据格式错误不回复
 				}
 			}
 
 			//恢复出厂设置
-			else if(p0 == strstr(p0,"c23"))
+			else if(p0 == strstr(p0,"c23:"))
 			{
 				p0 += 4;
 				if(*p0 == '1')				//开启FOTA
 				{
 					Flag.NeedClrValueFile = 1;
 					Flag.NeedResponseFrist = 1;	
-					strcpy(RespServiceBuf,"set the parametert to factory");
+					strcpy(RespServiceBuf,"c23:1");
 				}
 				else if(*p0 == '0')
 				{
-	
+					Flag.NeedSendResponse = 0;		//数据格式错误不回复
 				}
 				else
 				{
 					printf("\r\nc8 data format incorrect!\r\n");
-					strcpy(RespServiceBuf,"c8 data format incorrect!");	
+				//	strcpy(RespServiceBuf,"c8 data format incorrect!");	
+					Flag.NeedSendResponse = 0;		//数据格式错误不回复
+				}
+			}
+
+			//修改二氧化碳sensor阈值，格式：c24:1000,1500
+			else if(p0 == strstr(p0,"c24:"))
+			{
+				unsigned short WarnThresholdTemp = 0;
+				unsigned short AlarmThresholdTemp = 0;
+
+				p0 += 4;
+				p1 = strstr(p0,",");
+
+				if(p1 - p0 <= 5)			
+				{
+					WarnThresholdTemp = Ascii2BCD_u16(p0, p1-p0);
+
+					p0 = p1 + 1;
+					p1 = strstr(p0,"\"}}");
+
+					if(p1 - p0 <= 5)	
+					{
+						AlarmThresholdTemp = Ascii2BCD_u16(p0, p1-p0);
+					}
+
+
+					if(WarnThresholdTemp >= AlarmThresholdTemp)		//数据格式不合法
+					{
+//						strcpy(RespServiceBuf,"c22 data format incorrect!");
+						Flag.NeedSendResponse = 0;		//数据格式错误不回复
+						return;
+					}
+
+					Fs.Co2WarnThreshold = WarnThresholdTemp;
+					Fs.Co2AlarmThreshold = AlarmThresholdTemp;
+
+					Flag.NeedUpdateFs = 1;	
+					sprintf(RespServiceBuf,"c24:%d,%d",Fs.Co2WarnThreshold,Fs.Co2AlarmThreshold);
+				}
+				else
+				{
+					printf("\r\nc24 data format incorrect!\r\n");
+//					strcpy(RespServiceBuf,"c22 data format incorrect!");	
+					Flag.NeedSendResponse = 0;		//数据格式错误不回复
 				}
 			}
 		}
 		else
 		{
 			printf("\r\nRecvice data format incorrect!\r\n");
-			strcpy(RespServiceBuf,"Parameter format incorrect!");	
+//			strcpy(RespServiceBuf,"Parameter format incorrect!");	
+			Flag.NeedSendResponse = 0;		//数据格式错误不回复
 			return;
 		}
 	}
@@ -747,6 +799,12 @@ void WIRELESS_Handle(void)
 	{
 		at_timeout_temp = 75;
 	}
+
+	if(NoSimCardCnt >= 3)		//如果没有SIM卡，不执行任何AT指令动作
+	{
+		return;
+	}
+
 
 	//AT指令延时时间到仍没回复，复位模块
 	if (AtType != AT_NULL && Flag.WaitAtAck && !AtDelayCnt)

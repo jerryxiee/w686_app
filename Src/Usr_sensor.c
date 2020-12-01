@@ -14,7 +14,7 @@ uint16_t        ccs811_co2_value;           //CCS811读取的二氧化碳值
 uint16_t        ccs811_tvoc_value;          //CCS811读取的TVOC值
 uint16_t        ir_value;                   //红外检测到有人经过次数
 uint16_t        sensor_error;               //传感器出错标志
-uint8_t         try_get_co2_cnt;     //发送查询传感器指令后等待接收数据计时
+uint8_t         try_get_co2_cnt;            //发送查询传感器指令后等待接收数据计时
 
 uint8_t CCS811_Init(void);
 
@@ -22,8 +22,8 @@ void Sensor_Init(void)
 {
     sensor_check_step = 4;
 	sensor_type = 0xFE;		//开始查询模块标志
-
-    CO2_POWER_EN_RESET;         //开启二氧化碳传感器供电
+        
+    CO2_POWER_EN_SET;           //开启二氧化碳传感器供电
     SHT31_POWER_EN_RESET;       //开启SHT31和CCS811传感器供电
     CCS811_WAKE_RESET;
 
@@ -31,7 +31,7 @@ void Sensor_Init(void)
     if(CCS811_Init())
     {
         sensor_error |= CCS811_INIT_FAILED;
-        RED_ON;
+ //       LED_NET_RED_ON;
     }
 
 }
@@ -77,6 +77,7 @@ void Get_CO2_Sensor_Type(void)
 		else
 		{
 			sensor_type = 0;
+            Flag.Co2SensorError = 1;
 			printf("Can't find CO2 sensor!\n");
 		}
 	}
@@ -185,6 +186,14 @@ void CO2_Data_Receive(void)
     else if(co2_module_value < 400)
     {
         co2_module_value = 400;        
+    }
+    else if(co2_module_value == 0)      //读取不到传感器数据
+    {
+        Flag.Co2SensorError = 1;
+    }
+    else                                //传感器数据正常
+    {
+        Flag.Co2SensorError = 0;
     }
     Test.GetCo2Date = 1;
     printf("\nThe CO2 value is %d ppm\n",co2_module_value);
@@ -347,6 +356,8 @@ void Read_SHT31_Data(void)
 	
 	if((temperature_value_temp>=-20)&&(temperature_value_temp<=125)&&(humidity_value_temp>0)&&(humidity_value_temp<100))  //过滤错误数据
 	{
+        Flag.SHT3xSensorError = 0;
+
         if((temperature_value_temp >= 0) && (temperature_value_temp <= 50))
         {
             temperature_value = temperature_value_temp;
@@ -381,10 +392,12 @@ void Read_SHT31_Data(void)
     }
     else
     {
+        
         data_error_cnt ++;
         printf("SHT31 sensor data error, no use in this time!\r\n");
         if(data_error_cnt >= 10)
         {
+            Flag.SHT3xSensorError = 1;
             printf("SHT31 sensor data error over 10 times, need reset sensor!\r\n");
             SHT31_POWER_EN_SET;         //关闭温湿度传感器电源
             LL_mDelay(1000);

@@ -25,6 +25,18 @@ void ALLGPIO_SET_AIN(void)
 
 }
 
+void Clear_Leds(void)
+{
+    LED_NET_RED_OFF;
+    LED_NET_GREEN_OFF;
+    LED_NET_BLUE_OFF;
+
+    LED_SENSOR_RED_OFF;
+    LED_SENSOR_GREEN_OFF;
+    LED_SENSOR_BLUE_OFF;
+}
+
+
 //所有GPIO在关机模式下全部配置成浮空输入，仅保持开机和SIM卡中断开启，如开机，将唤醒单片机，重启设备
 void GPIO_ExintPwrInit(void)
 {
@@ -50,6 +62,12 @@ void GPIO_init(void)
     GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
     LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+    /*回复出厂设置按键，低电平有效*/
+    GPIO_InitStruct.Pin = LL_GPIO_PIN_0;
+    GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
+    GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
+    LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
     /**/
     GPIO_InitStruct.Pin = LL_GPIO_PIN_5;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
@@ -73,7 +91,7 @@ void GPIO_init(void)
     LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
         /**/
-    GPIO_InitStruct.Pin = LL_GPIO_PIN_1;
+    GPIO_InitStruct.Pin = LL_GPIO_PIN_1|LL_GPIO_PIN_2|LL_GPIO_PIN_3|LL_GPIO_PIN_10|LL_GPIO_PIN_11;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
     GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
@@ -261,9 +279,10 @@ void GPIO_init(void)
     NVIC_SetPriority(EXTI4_15_IRQn, 2);
     NVIC_EnableIRQ(EXTI4_15_IRQn);
 
+    Clear_Leds();
 
-    GREEN_ON;
-    RED_ON;
+    LED_NET_GREEN_ON;
+    LED_SENSOR_GREEN_ON;
     CCS811_WAKE_RESET;
     MODULE_WAKEUP_SET;
 }

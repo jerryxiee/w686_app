@@ -24,7 +24,7 @@ typedef enum{
 #define TFTPLEN    		30
 #define GPRSCONTLEN		200
 
-#define USR_FOR_JP		0				//切换在中国使用和日本使用开关，0为中国使用，1为日本使用
+#define USR_FOR_JP		1				//切换在中国使用和日本使用开关，0为中国使用，1为日本使用
 #define SENSOR_3		1
 #define NO_SLEEP		1
 #define USR_TEST_PLAM		1		//使用测试服

@@ -18,8 +18,8 @@ const unsigned char SoftwareBuilt[50] = {0};
 char Edition[50] = {0};
 
 
-char Edition_STD[50] = {"w868_SIM7080G_V0.0.5"};				//程序的稳定版本，手动设置版本型号
-char HardWare_Edition[50] = {"TY197_MAIN_V1.0"};		//硬件版本，手动设置版本型号
+char Edition_STD[50] = {"w868_SIM7080G_V0.0.6"};				//程序的稳定版本，手动设置版本型号
+char HardWare_Edition[50] = {"TY197_MAIN_V2.0"};		//硬件版本，手动设置版本型号
 
 u8 Built_year[5] = {'\0'};
 u8 Built_mon[3] = {'\0'};
@@ -191,9 +191,10 @@ void Flag_Check(void)
 	if(Flag.NeedGetBatVoltage)
 	{
 		Flag.NeedGetBatVoltage = 0;
-		BatVoltage_Adc = Adc_Value_Get();
-		BatVoltage_Adc = BatVoltage_Adc * 34/10;		//转换成电池电压,x3.2
-//		printf("The battery voltage is %d mv\r\n",BatVoltage_Adc);
+		BatVoltage_Adc = (u32)Adc_Value_Get();
+		//转换成电池电压,470k和270k分压，采样值*（7.4/0.27）=采样值*2.74,修正到2.8；外加0.2v的二极管分压
+		BatVoltage_Adc = (BatVoltage_Adc * 290/100) + 200;		
+		printf("The battery voltage is %d mv\r\n",BatVoltage_Adc);
 	}
 
 	if((UpgInfo.NeedWaitUpgrade)&&(Rtc.hour == 1))

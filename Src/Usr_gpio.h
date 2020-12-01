@@ -10,14 +10,31 @@
 #define POWER_ON		        LL_GPIO_SetOutputPin(GPIOC,LL_GPIO_PIN_7)
 #define POWER_OFF		        LL_GPIO_ResetOutputPin(GPIOC,LL_GPIO_PIN_7)
 	
-#define RED_ON    		        LL_GPIO_SetOutputPin(GPIOA,LL_GPIO_PIN_12)					
-#define RED_OFF   		        LL_GPIO_ResetOutputPin(GPIOA,LL_GPIO_PIN_12)			
-#define RED_NEG   		        LL_GPIO_IsInputPinSet(GPIOA,LL_GPIO_PIN_12)? LL_GPIO_ResetOutputPin(GPIOA,LL_GPIO_PIN_12):LL_GPIO_SetOutputPin(GPIOA,LL_GPIO_PIN_12)
+#define LED_SENSOR_RED_ON       LL_GPIO_ResetOutputPin(GPIOA,LL_GPIO_PIN_12)					
+#define LED_SENSOR_RED_OFF   	LL_GPIO_SetOutputPin(GPIOA,LL_GPIO_PIN_12)			
+#define LED_SENSOR_RED_NEG   	LL_GPIO_IsInputPinSet(GPIOA,LL_GPIO_PIN_12)? LL_GPIO_SetOutputPin(GPIOA,LL_GPIO_PIN_12):LL_GPIO_ResetOutputPin(GPIOA,LL_GPIO_PIN_12)
 
-#define GREEN_ON    	        LL_GPIO_SetOutputPin(GPIOA,LL_GPIO_PIN_11)					
-#define GREEN_OFF   	        LL_GPIO_ResetOutputPin(GPIOA,LL_GPIO_PIN_11)		
-#define GREEN_NEG   	        LL_GPIO_IsInputPinSet(GPIOA,LL_GPIO_PIN_11)? LL_GPIO_ResetOutputPin(GPIOA,LL_GPIO_PIN_11):LL_GPIO_SetOutputPin(GPIOA,LL_GPIO_PIN_11)
+#define LED_SENSOR_GREEN_ON    	LL_GPIO_ResetOutputPin(GPIOA,LL_GPIO_PIN_11)					
+#define LED_SENSOR_GREEN_OFF   	LL_GPIO_SetOutputPin(GPIOA,LL_GPIO_PIN_11)		
+#define LED_SENSOR_GREEN_NEG   	LL_GPIO_IsInputPinSet(GPIOA,LL_GPIO_PIN_11)? LL_GPIO_SetOutputPin(GPIOA,LL_GPIO_PIN_11):LL_GPIO_ResetOutputPin(GPIOA,LL_GPIO_PIN_11)
 
+#define LED_SENSOR_BLUE_ON    	LL_GPIO_ResetOutputPin(GPIOC,LL_GPIO_PIN_2)					
+#define LED_SENSOR_BLUE_OFF   	LL_GPIO_SetOutputPin(GPIOC,LL_GPIO_PIN_2)		
+#define LED_SENSOR_BLUE_NEG   	LL_GPIO_IsInputPinSet(GPIOC,LL_GPIO_PIN_2)? LL_GPIO_SetOutputPin(GPIOC,LL_GPIO_PIN_2):LL_GPIO_ResetOutputPin(GPIOC,LL_GPIO_PIN_2)
+
+#define LED_NET_RED_ON          LL_GPIO_ResetOutputPin(GPIOC,LL_GPIO_PIN_3)					
+#define LED_NET_RED_OFF   	    LL_GPIO_SetOutputPin(GPIOC,LL_GPIO_PIN_3)			
+#define LED_NET_RED_NEG   	    LL_GPIO_IsInputPinSet(GPIOC,LL_GPIO_PIN_3)? LL_GPIO_SetOutputPin(GPIOC,LL_GPIO_PIN_3):LL_GPIO_ResetOutputPin(GPIOC,LL_GPIO_PIN_3)
+
+#define LED_NET_GREEN_ON    	LL_GPIO_ResetOutputPin(GPIOC,LL_GPIO_PIN_11)					
+#define LED_NET_GREEN_OFF   	LL_GPIO_SetOutputPin(GPIOC,LL_GPIO_PIN_11)		
+#define LED_NET_GREEN_NEG   	LL_GPIO_IsInputPinSet(GPIOC,LL_GPIO_PIN_11)? LL_GPIO_SetOutputPin(GPIOC,LL_GPIO_PIN_11):LL_GPIO_ResetOutputPin(GPIOC,LL_GPIO_PIN_11)
+
+#define LED_NET_BLUE_ON    	    LL_GPIO_ResetOutputPin(GPIOC,LL_GPIO_PIN_10)					
+#define LED_NET_BLUE_OFF   	    LL_GPIO_SetOutputPin(GPIOC,LL_GPIO_PIN_10)		
+#define LED_NET_BLUE_NEG   	    LL_GPIO_IsInputPinSet(GPIOC,LL_GPIO_PIN_10)? LL_GPIO_SetOutputPin(GPIOC,LL_GPIO_PIN_10):LL_GPIO_ResetOutputPin(GPIOC,LL_GPIO_PIN_10)
+
+#define FACTORY_BUTTON          LL_GPIO_IsInputPinSet(GPIOC,LL_GPIO_PIN_0)
 #define CM1106LN_READY          LL_GPIO_IsInputPinSet(GPIOA,LL_GPIO_PIN_4)
 #define SHT3X_ALERT             LL_GPIO_IsInputPinSet(GPIOA,LL_GPIO_PIN_5)
 #define CHRG_STAT               LL_GPIO_IsInputPinSet(GPIOB,LL_GPIO_PIN_14)
@@ -74,6 +91,7 @@ void Sys_Setting_Before_StopMode(void);
 void Exit_GPIO_Interrupt_Init(void);
 void StopMode_TurnOn_Some_GPIOs(void); 
 void GPIO_Init_Before_Shutdown(void);
+void Clear_Leds(void);
 extern unsigned char KeyDefaultCnt;
 extern unsigned char KeyPwrActCnt;
 extern unsigned char ledCnt;

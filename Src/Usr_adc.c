@@ -1,6 +1,6 @@
 #include "Usr_main.h"
 
-u16	BatVoltage_Adc;			//电池电压ADC采样值
+u32	BatVoltage_Adc;			//电池电压ADC采样值
 
 #define VDDA_APPLI                       (3300U)
 

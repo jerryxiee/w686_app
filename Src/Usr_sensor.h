@@ -10,8 +10,6 @@
 
 #define     CCS811_INIT_FAILED      0x0001
 
-#define     CO2_ALARM_THRESHOLD     1500
-
 extern uint16_t     co2_module_value;           //二氧化碳模块传感器读取的二氧化碳值
 extern float        humidity_value;             //SHT31湿度值，单位%
 extern float        temperature_value;          //SHT31温度值，单位摄氏度

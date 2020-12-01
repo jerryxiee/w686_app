@@ -22,6 +22,7 @@ void Test_Receive(void)
     if((Test.WaitEnterTest > 0) && (strstr(Uart3Buf, "AT^TST")))
 	{
 		Test.TestStep = 0;
+        Test.InTesting = 1;
 	}
 
     if(Test.TestStep == 0xFF)      
@@ -44,15 +45,41 @@ void Test_Receive(void)
             
             if(memcmp(temp_buf,read_buf,strlen(temp_buf)) == 0)
             {
-                sprintf(send_buf,"^DEV@TST=%s",temp_buf);
-                UART_Send(USART3,(u8 *)send_buf,strlen(send_buf)-1);        //长度减1是去掉“#”
+                p1 = strstr(temp_buf, "#");
+                *p1 = 0;
+                sprintf(send_buf,"^DEV@SET0=%s\r\n",temp_buf);
+                UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));        //长度减1是去掉“#”
             }
         }
     }
     else if(strstr(Uart3Buf, "AT^SET1="))
     {
+        p0 = strstr(Uart3Buf, "AT^SET1=");
+        p0 += 8;
+        p1 = strstr(p0, "\r\n");
+        if(p1 - p0 < sizeof(temp_buf))
+        {
+            strncpy(temp_buf,p0,p1 - p0);
+            sprintf(send_buf,"^DEV@SET1=%s\r\n",temp_buf);
+            UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));     
+        }
+
+        //测试完成，清除LED测试模式
+        Clear_Leds();	
+
+        if(*p0 == '0')
+        {
+            LED_NET_RED_ON;
+            LED_SENSOR_RED_ON;
+        }
+        else if(*p0 == '1')
+        {
+            LED_NET_GREEN_ON;
+            LED_SENSOR_GREEN_ON;
+        }
+        Test.ShowResultCnt = 200;     //通过LED显示测试结果持续200秒
         Test.TestOver = 1;
-        UART_Send(USART3,"Test over\r\n",11); 
+        Test.InTesting = 0;
     }
     else if(strstr(Uart3Buf, "AT^SET2="))
     {
@@ -68,8 +95,10 @@ void Test_Receive(void)
             
             if(memcmp(temp_buf,read_buf,strlen(temp_buf)) == 0)
             {
-                sprintf(send_buf,"^DEV@TST=%s",temp_buf);
-                UART_Send(USART3,(u8 *)send_buf,strlen(send_buf)-1);
+                p1 = strstr(temp_buf, "#");
+                *p1 = 0;
+                sprintf(send_buf,"^DEV@SET2=%s\r\n",temp_buf);
+                UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
             }
         }
     }
@@ -87,8 +116,10 @@ void Test_Receive(void)
             
             if(memcmp(temp_buf,read_buf,strlen(temp_buf)) == 0)
             {
-                sprintf(send_buf,"^DEV@TST=%s",temp_buf);
-                UART_Send(USART3,(u8 *)send_buf,strlen(send_buf)-1);
+                p1 = strstr(temp_buf, "#");
+                *p1 = 0;
+                sprintf(send_buf,"^DEV@SET3=%s\r\n",temp_buf);
+                UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
             }
         }
     }
@@ -97,7 +128,7 @@ void Test_Receive(void)
         EXFLASH_ReadBuffer((u8 *)read_buf,TESTRESULTADDR_0,sizeof(read_buf));
         p0 = strstr(read_buf,"#");
         *p0 = 0;
-        sprintf(send_buf,"^DEV@TST=%s",read_buf);
+        sprintf(send_buf,"^DEV@GET0=%s\r\n",read_buf);
         UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
     }
     else if(strstr(Uart3Buf, "AT^GET1="))
@@ -105,7 +136,7 @@ void Test_Receive(void)
         EXFLASH_ReadBuffer((u8 *)read_buf,TESTRESULTADDR_1,sizeof(read_buf));
         p0 = strstr(read_buf,"#");
         *p0 = 0;
-        sprintf(send_buf,"^DEV@GET1=%s",read_buf);
+        sprintf(send_buf,"^DEV@GET1=%s\r\n",read_buf);
         UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
     }
     else if(strstr(Uart3Buf, "AT^GET2="))
@@ -113,7 +144,7 @@ void Test_Receive(void)
         EXFLASH_ReadBuffer((u8 *)read_buf,TESTRESULTADDR_2,sizeof(read_buf));
         p0 = strstr(read_buf,"#");
         *p0 = 0;
-        sprintf(send_buf,"^DEV@GET2=%s",read_buf);
+        sprintf(send_buf,"^DEV@GET2=%s\r\n",read_buf);
         UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
     }
     else if(strstr(Uart3Buf, "AT^GET3="))
@@ -121,7 +152,7 @@ void Test_Receive(void)
         EXFLASH_ReadBuffer((u8 *)read_buf,TESTRESULTADDR_3,sizeof(read_buf));
         p0 = strstr(read_buf,"#");
         *p0 = 0;
-        sprintf(send_buf,"^DEV@GET3=%s",read_buf);
+        sprintf(send_buf,"^DEV@GET3=%s\r\n",read_buf);
         UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
     }
 

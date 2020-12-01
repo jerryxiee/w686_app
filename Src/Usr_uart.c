@@ -148,6 +148,11 @@ void At_Receive(void)
 		
 	}
 
+	if (strstr(Uart1Buf, "+CPIN: NOT INSERTED") )
+	{
+		Flag.NoSimCard = 1;
+	}
+
 	if (strstr(Uart1Buf, "OK") )
 	{
 		Flag.RcvAtAckOK = 1;
@@ -238,7 +243,7 @@ void At_Receive(void)
 		}
 	}
 
-	#if 0
+	#if 1
 	//提起模块的IMEI
 	if ((p1 = strstr(Uart1Buf, "IMEI:")) != NULL)
 	{

@@ -37,6 +37,9 @@ typedef struct{
 	unsigned int  	BkSendLen;          //已发断点字长计数，单位byte
 	unsigned short  Interval;           //定位包上传间隔	
 	unsigned char 	FotaSwitch;			//远程升级开关，0xAA为关闭远程升级，其他为开启远程升级
+	unsigned char 	HaveSetMode;		//是否设置模块网络模式
+	unsigned short 	Co2WarnThreshold; //二氧化碳传感器告警值
+	unsigned short  Co2AlarmThreshold;	//二氧化碳传感器报警值
 }FS;
 #endif
 

@@ -203,13 +203,17 @@ typedef struct FLAG_
 	unsigned char NeedLogIn:1;					//需要发送登入包
 	unsigned char NeedChangeSoftSim:1;			//需要修改softsim卡号
 	unsigned char InCharging:1;					//设备出于充电状态
-	unsigned char SensorLed:1;					//传感器指示sensor灯，为1时表示需要亮一下
+	unsigned char LowBatLed:1;					//传感器指示sensor灯，为1时表示需要亮一下
 
 	unsigned char NeedShutDown:1;				//电池电压达到或者低于设定值时，关机
 	unsigned char NeedSendUpgResult:1;			//需要发送升级结果
 	unsigned char NeedSendResponse:1;			//需要应答服务器消息
 	unsigned char NeedResponseFrist:1;			//某些下发指令需要先应答后再执行
 	unsigned char NeedGetBatVoltage:1;			//需要检测电池电压ADC值
+	unsigned char Co2SensorError:1;				//二氧化碳传感器读取错误
+	unsigned char SHT3xSensorError:1;			//温湿度传感器读取错误
+	unsigned char SensorErrorLed:1;				//传感器读取错误
+	unsigned char NoSimCard:1;					//未检测到SIM卡
 
 }FLAG;
 #endif

@@ -313,19 +313,10 @@ unsigned char AT_InitReceive(AT_TYPE *temType, char *pSrc)
 		}
 		else if (*temType == AT_AT)
 		{
-		// 	*temType = AT_CFUN_4;
-		// }
-		// else if (*temType == AT_CFUN_4)
-		// {
-		// 	*temType = AT_CFUN_1;
-		// }
-		// else if (*temType == AT_CFUN_1)
-		// {
 			*temType = AT_ATI;
 		}
 		else if (*temType == AT_ATI)
 		{
-	#if JP_AT_USE
 		 	*temType = AT_CGDCONT;
 		}
 		else if (*temType == AT_CGDCONT)
@@ -334,16 +325,21 @@ unsigned char AT_InitReceive(AT_TYPE *temType, char *pSrc)
 		}
 		else if (*temType == AT_CNCFG)
 		{
-			*temType = AT_CMNB_1;
-		}
-		else if (*temType == AT_CMNB_1)
-		{	
-	#else
-		*temType = AT_CMNB_3;
+			if(Fs.HaveSetMode != 1)
+			{
+				*temType = AT_CMNB_3;		//如果之前没有设置网络模式，设置之后需要重启模块
+			}
+			else
+			{
+				*temType = AT_CFGRI;		//如果设置过，跳过网络模式
+			}
 		}
 		else if (*temType == AT_CMNB_3)
 		{	
-	#endif
+			Flag.NeedUpdateFs = 1;
+			Fs.HaveSetMode = 1;
+			ResetLeftCnt = 3;
+
 			*temType = AT_CFGRI;
 		}
 		else if (*temType == AT_CFGRI)
@@ -413,6 +409,9 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 	case AT_CPIN:
 		if (strstr(pSrc, "READY"))
 		{
+			Flag.NoSimCard = 0;
+			NoSimCardCnt = 0;
+
 			AtDelayCnt = 0;
 			back = 1;
 			*temType = AT_NULL;
@@ -426,7 +425,10 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 			if (CheckSimError > 3)
 			{
 				CheckSimError = 0;
-				NeedModuleReset = NO_SIMCARD;
+				if(NoSimCardCnt < 3)
+				{
+					NeedModuleReset = NO_SIMCARD;
+				}				
 			}
 		}
 		break;
