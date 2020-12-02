@@ -57,11 +57,14 @@ extern unsigned char InitCmdTimes;
 extern unsigned short GprsRecDataLen;
 extern unsigned short BatVoltage;
 
-extern char MccMnc[7];
+extern char Mcc[7];
+extern char Mnc[7];
+extern char Cid[10];
+extern char Lac[10];
 extern char Imei[16];		
 extern char GsmRev[50];		
 extern char CsqValue[12];	
-	
+
 
 void AT_SendPacket(AT_TYPE temType,char * pDst);
 unsigned char AT_InitReceive(AT_TYPE *temType,char * pSrc);

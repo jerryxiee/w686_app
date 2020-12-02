@@ -279,12 +279,20 @@ void Acsii2Bcd(char *pSrc, char *pDst, unsigned char i)
 	}
 }
 
+//将十进制的字符串转换为十六进制的字符串,最大转换0xFFFFFFFF对应的十进制长度
+void BcdStr2HexStr(char *pSrc, char *pDst)
+{
+	u32 TempData = 0;
+
+	TempData = (u32)atoi(pSrc);
+	sprintf(pDst,"%x",TempData);
+}
+
 u16 Mqtt_SendPacket(GPRS_TYPE switch_tmp)
 {
 	u16 data_len = 0;
 	u8 bat_percente = 0;
 	char Temp[50] = {0};
-	char NotSupport[20] = {"not support"};
 
 	memset(GprsSendBuf, '\0', DATABUFLEN);
 	memset(GprsContent, '\0', GPRSCONTLEN);
@@ -358,6 +366,10 @@ u16 Mqtt_SendPacket(GPRS_TYPE switch_tmp)
 
 		strcat(GprsContent, "s3:"); //温度
 		sprintf(Temp, "\"%.1f\",", temperature_value);
+		strcat(GprsContent, Temp);
+
+		strcat(GprsContent, "p3:"); //基站
+		sprintf(Temp, "\"%s_%s_%s_%s\"", Cid,Lac,Mcc,Mnc);
 		strcat(GprsContent, Temp);
 
 		// strcat(GprsContent, "s4:"); //红外
@@ -558,8 +570,56 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 
 			strncpy(gprs_content, p0, p1 - p0 - 1);
 			printf("\r\nRecvice the data form service: %s\r\n",gprs_content);
+
+			//重启和关机命令
+			if(p0 == strstr(p0,"c8:"))
+			{
+				p0 += 3;
+				if(*p0 == '1')			
+				{
+					Flag.NeedDeviceRst = 1;
+					Flag.NeedResponseFrist = 1;	
+					strcpy(RespServiceBuf,"c8:1");
+				}
+				else if(*p0 == '0')
+				{
+					Flag.NeedShutDown = 1;	
+					Flag.NeedResponseFrist = 1;		
+					strcpy(RespServiceBuf,"c8:0");		
+				}
+				else
+				{
+					printf("\r\nc8 data format incorrect!\r\n");
+				//	strcpy(RespServiceBuf,"c8 data format incorrect!");	
+					Flag.NeedSendResponse = 0;		//数据格式错误不回复
+				}
+			}
+
+			//设置FOTA升级允许
+			else if(p0 == strstr(p0,"c17:"))
+			{
+				p0 += 4;
+				if(*p0 == '1')				//开启FOTA
+				{
+					Fs.FotaSwitch = 0x01;
+					Flag.NeedUpdateFs = 1;
+					strcpy(RespServiceBuf,"c17:1");
+				}
+				else if(*p0 == '0')
+				{
+					Fs.FotaSwitch = 0xAA;
+					Flag.NeedUpdateFs = 1;		
+					strcpy(RespServiceBuf,"c17:0");			
+				}
+				else
+				{
+					printf("\r\nc17 data format incorrect!\r\n");
+					strcpy(RespServiceBuf,"c17 data format error!");	
+				}
+			}
+
 			//远程升级：c18:4-W686IB_V0.0.1.bin-9caf17aecfcf907bc85ad1c187cb255b
-			if(p0 == strstr(p0,"c18"))
+			else if(p0 == strstr(p0,"c18"))
 			{
 				p0 = strstr(p0,":");
 				p0 ++;
@@ -632,51 +692,35 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 				
 
 			}
-			//设置FOTA升级允许
-			else if(p0 == strstr(p0,"c17:"))
+
+			//修改传感器数据检测时间间隔
+			else if(p0 == strstr(p0,"c21:"))
 			{
+				unsigned short Interval_ck_Temp = 0;
 				p0 += 4;
-				if(*p0 == '1')				//开启FOTA
+				p1 = strstr(p0,"\"}}");
+
+				if(p1 - p0 <= 7)			
 				{
-					Fs.FotaSwitch = 0x01;
-					Flag.NeedUpdateFs = 1;
-					strcpy(RespServiceBuf,"Fota open");
-				}
-				else if(*p0 == '0')
-				{
-					Fs.FotaSwitch = 0xAA;
-					Flag.NeedUpdateFs = 1;		
-					strcpy(RespServiceBuf,"Fota close");			
-				}
-				else
-				{
-					printf("\r\nc17 data format incorrect!\r\n");
-					strcpy(RespServiceBuf,"c17 data format error!");	
-				}
-			}
-			//重启和关机命令
-			else if(p0 == strstr(p0,"c8:"))
-			{
-				p0 += 3;
-				if(*p0 == '1')			
-				{
-					Flag.NeedDeviceRst = 1;
-					Flag.NeedResponseFrist = 1;	
-					strcpy(RespServiceBuf,"c8:1");
-				}
-				else if(*p0 == '0')
-				{
-					Flag.NeedShutDown = 1;	
-					Flag.NeedResponseFrist = 1;		
-					strcpy(RespServiceBuf,"c8:0");		
+					Interval_ck_Temp = Ascii2BCD_u16(p0, p1-p0);
+					if(Interval_ck_Temp < 5)			//19B自身采样间隔为5秒一次，小于这个值没什么意义
+					{
+						Flag.NeedSendResponse = 0;		//数据格式错误不回复
+						return;
+					}
+
+					Fs.SensorCkInterval = Interval_ck_Temp;
+
+					Flag.NeedUpdateFs = 1;	
+					sprintf(RespServiceBuf,"c21:%d",Fs.SensorCkInterval);
 				}
 				else
 				{
-					printf("\r\nc8 data format incorrect!\r\n");
-				//	strcpy(RespServiceBuf,"c8 data format incorrect!");	
-					Flag.NeedSendResponse = 0;		//数据格式错误不回复
+					printf("\r\nc21 data format incorrect!\r\n");
+					Flag.NeedSendResponse = 0;			//数据格式错误不回复
 				}
 			}
+
 			//修改上传时间间隔
 			else if(p0 == strstr(p0,"c22:"))
 			{
@@ -684,7 +728,7 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 				p0 += 4;
 				p1 = strstr(p0,"\"}}");
 
-				if(p1 - p0 <= 7)				//开启FOTA
+				if(p1 - p0 <= 7)			
 				{
 					Interval_Temp = Ascii2BCD_u16(p0, p1-p0);
 					if(Interval_Temp < 5)
@@ -696,7 +740,7 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 
 					Fs.Interval = Interval_Temp;
 					IntervalTemp = Interval_Temp;
-					
+
 					Flag.NeedUpdateFs = 1;	
 					sprintf(RespServiceBuf,"c22:%d",Fs.Interval);
 				}
@@ -769,6 +813,84 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 				{
 					printf("\r\nc24 data format incorrect!\r\n");
 //					strcpy(RespServiceBuf,"c22 data format incorrect!");	
+					Flag.NeedSendResponse = 0;		//数据格式错误不回复
+				}
+			}
+
+			//需要校准二氧化碳传感器
+			else if(p0 == strstr(p0,"c25:"))
+			{
+				p0 += 4;
+				if(*p0 == '1')				
+				{
+					Flag.NeedCalibrateCo2 = 1;
+					Flag.NeedResponseFrist = 1;	
+					strcpy(RespServiceBuf,"c25:1");
+				}
+				else if(*p0 == '0')
+				{
+					Flag.NeedSendResponse = 0;		//数据格式错误不回复
+				}
+				else
+				{
+					printf("\r\nc25 data format incorrect!\r\n");
+				//	strcpy(RespServiceBuf,"c8 data format incorrect!");	
+					Flag.NeedSendResponse = 0;		//数据格式错误不回复
+				}
+			}
+
+			//上报设备参数
+			else if(p0 == strstr(p0,"c26:"))
+			{
+				u8 CalibrateState_temp = 0;
+
+				p0 += 4;
+				if(*p0 == '1')				
+				{
+					if(Fs.AutoCalibrateState == 1)
+					{
+						CalibrateState_temp = 0;
+					}
+					else
+					{
+						CalibrateState_temp = 1;
+					}
+
+					Flag.NeedResponseFrist = 1;	
+					sprintf(RespServiceBuf,"c21:%d,c22:%d,c24:%d,%d,c27:%d",Fs.SensorCkInterval,Fs.Interval,Fs.Co2WarnThreshold,Fs.Co2AlarmThreshold,CalibrateState_temp);
+				}
+				else if(*p0 == '0')
+				{
+					Flag.NeedSendResponse = 0;		//数据格式错误不回复
+				}
+				else
+				{
+					printf("\r\nc26 data format incorrect!\r\n");
+					Flag.NeedSendResponse = 0;		//数据格式错误不回复
+				}
+			}
+
+			//二氧化碳传感器自动校准关闭/开启
+			else if(p0 == strstr(p0,"c27:"))
+			{
+				p0 += 4;
+				if(*p0 == '0')				
+				{
+					Fs.AutoCalibrateState = 1;	
+					Flag.NeedCloseAutoCalib = 1;
+					Flag.NeedUpdateFs = 1;	
+					strcpy(RespServiceBuf,"c27:0");
+				}
+				else if(*p0 == '1')
+				{
+					Fs.AutoCalibrateState = 0xAA;	
+					Flag.NeedOpenAutoCalib = 1;
+					Flag.NeedUpdateFs = 1;	
+					strcpy(RespServiceBuf,"c27:1");
+				}
+				else
+				{
+					printf("\r\nc27 data format incorrect!\r\n");
 					Flag.NeedSendResponse = 0;		//数据格式错误不回复
 				}
 			}

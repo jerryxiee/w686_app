@@ -24,7 +24,7 @@ typedef enum{
 #define TFTPLEN    		30
 #define GPRSCONTLEN		200
 
-#define USR_FOR_JP		1				//切换在中国使用和日本使用开关，0为中国使用，1为日本使用
+#define USR_FOR_JP		0				//切换在中国使用和日本使用开关，0为中国使用，1为日本使用
 #define SENSOR_3		1
 #define NO_SLEEP		1
 #define USR_TEST_PLAM		1		//使用测试服
@@ -73,7 +73,7 @@ void StrAscii2Hex(char *pSrc,char *pDst,u16 Srclen);
 void WIRELESS_GprsReceive_CC828(char *pSrc,u16 len);
 void WIRELESS_GprsReceive(char *pSrc,u16 len);
 void WIRELESS_Handle(void);
-
+void BcdStr2HexStr(char *pSrc, char *pDst);
 u32 Ascii2Hex(char *pSrc,unsigned char srcLen);
 
 u32 HEX2BCD_FOR_U32(u16 Val_HEX);

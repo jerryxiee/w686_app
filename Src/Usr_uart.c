@@ -243,7 +243,7 @@ void At_Receive(void)
 		}
 	}
 
-	#if 1
+	#if 0
 	//提起模块的IMEI
 	if ((p1 = strstr(Uart1Buf, "IMEI:")) != NULL)
 	{

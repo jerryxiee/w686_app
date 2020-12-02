@@ -7,14 +7,14 @@ unsigned char baseTimeSec;
 unsigned char baseTimeMin;
 unsigned char baseTimeHor;
 unsigned int baseSecCnt;
-unsigned int Timestamp;		//unix时间（时间戳）
-unsigned char ResetLeftCnt; //该变量为重启设备倒计时。被赋值之后递减，为0时重启模块。需要延时重启时使用，例如更新Fs数据后需要重启
-unsigned int AtDelayCnt; 	//AT指令发送成功后延时多久发送下一条指令，通常AT指令处理处理完成后会清零该位，取消等待
-unsigned short IntervalTemp; //用来暂存定时上传时间间隔
-unsigned char WaitRestart;		//等待一段时间后重启，用于某些时候需要先发送GPRS数据后再重启
-unsigned char ConnectGprsCnt;	//连接到服务器计时，用于连接服务器15秒后关闭网络led灯
-unsigned char AT_CBC_IntervalTemp; 	//电池电量采样间隔
-unsigned char FactoryCnt;		//恢复出厂设置按键按下计数器
+unsigned int Timestamp;						//unix时间（时间戳）
+unsigned char ResetLeftCnt; 				//该变量为重启设备倒计时。被赋值之后递减，为0时重启模块。需要延时重启时使用，例如更新Fs数据后需要重启
+unsigned int AtDelayCnt; 					//AT指令发送成功后延时多久发送下一条指令，通常AT指令处理处理完成后会清零该位，取消等待
+unsigned short IntervalTemp; 				//用来暂存定时上传时间间隔
+unsigned char WaitRestart;					//等待一段时间后重启，用于某些时候需要先发送GPRS数据后再重启
+unsigned char ConnectGprsCnt;				//连接到服务器计时，用于连接服务器15秒后关闭网络led灯
+unsigned char AT_CBC_IntervalTemp; 			//电池电量采样间隔
+unsigned char FactoryCnt;					//恢复出厂设置按键按下计数器
 
 const unsigned char arr_nDays[12] = 	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 const unsigned char Leap_month_day[12]=	{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}; //闰年 
@@ -207,7 +207,7 @@ void TIMER_SecCntHandle(void)
 
 	baseSecCnt ++;
 
-	if (baseSecCnt % 10 == 0)			//在数据上传前提前一点时间检查传感器数据
+	if (baseSecCnt % Fs.SensorCkInterval == 0)			//在数据上传前提前一点时间检查传感器数据
 	{
 		Flag.NeedCheckCO2Value = 1;
 		Flag.NeedCheckSHT3XSensor = 1;
@@ -265,6 +265,7 @@ void TIMER_SecCntHandle(void)
 		if (baseSecCnt % 30 == 5)
 		{
 			Flag.PsSignalChk = 1; 
+			Flag.NeedcheckLBS = 1;
 		}
 	}
 
@@ -397,8 +398,8 @@ void TIMER_BaseCntHandle(void)
 		Uart4RecCnt--;
 	}
 
-	if (++ledCnt > 31)
-		ledCnt = 0; //周期为4s
+	if (++ledCnt > 27)
+		ledCnt = 0; //周期为3s
 
 	if(Test.WaitTestCnt > 0)
 	{
@@ -537,30 +538,16 @@ void TIMER_BaseCntHandle(void)
 			}
 			break;
 		case 6:
-
-			break;
-		case 16:
-			if(ConnectGprsCnt >= 15)
-			break;
-
-			if(Flag.PsSignalOk == 0)
+			if(Flag.LowBatLed)
 			{
+				Flag.LowBatLed = 0;
 				LED_NET_RED_ON;
 				LED_NET_GREEN_OFF;
-				LED_NET_BLUE_ON;
+				LED_NET_BLUE_OFF;					
 			}
-			else if((Flag.PsSignalOk)&&(Flag.GprsConnectOk == 0))
-			{
-				LED_NET_RED_ON;
-				LED_NET_GREEN_ON;
-				LED_NET_BLUE_ON;			
-			}
-			else if(Flag.GprsConnectOk)
-			{
-				LED_NET_RED_OFF;
-				LED_NET_GREEN_ON;
-				LED_NET_BLUE_ON;			
-			}
+			break;
+		case 16:
+
 			break;
 
 

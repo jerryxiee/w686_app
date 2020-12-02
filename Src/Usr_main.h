@@ -214,7 +214,9 @@ typedef struct FLAG_
 	unsigned char SHT3xSensorError:1;			//温湿度传感器读取错误
 	unsigned char SensorErrorLed:1;				//传感器读取错误
 	unsigned char NoSimCard:1;					//未检测到SIM卡
-
+	unsigned char NeedCalibrateCo2:1;			//需要校准二氧化碳传感器
+	unsigned char NeedCloseAutoCalib:1;			//需要关闭二氧化碳传感器的自动校准
+	unsigned char NeedOpenAutoCalib:1;			//需要开启二氧化碳传感器的自动校准
 }FLAG;
 #endif
 

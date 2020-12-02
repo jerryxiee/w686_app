@@ -119,8 +119,6 @@ void Usr_InitValue(void)
 	AT_CBC_IntervalTemp = 20;
 	ActiveTimer = ACTIVE_TIME;
 	
-	memset(MccMnc, '\0', 7);
-
 	AtType = AT_NULL;
 	Flag.WaitAtAck = 0;
 	WatchDogCnt = 0;
@@ -150,12 +148,15 @@ void Usr_InitValue(void)
 		Fs.Interval = 120;
 		Flag.NeedUpdateFs = 1;
 	}
-	
-	#if NO_SLEEP
-	IntervalTemp = 300;
-	#else
+
+	if(Fs.SensorCkInterval == 0 || Fs.Interval == 0xffff)
+	{
+		Fs.SensorCkInterval = 10;
+		Flag.NeedUpdateFs = 1;		
+	}
+
 	IntervalTemp = Fs.Interval;
-	#endif
+
 	//读取到的关键参数合法性判断
 	if(strlen(Fs.IpAdress) < 5)			
 	{

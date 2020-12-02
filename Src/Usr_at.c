@@ -15,9 +15,11 @@ char BatValue[5];
 unsigned char Rssi; //gsm信号强度原始数据
 unsigned short BatVoltage;		//电池电压，这里使用模块供电电压作为电池电压计算电池剩余电量
 char CsqValue[12];
-char MccMnc[7];
 char GsmRev[50];				//GSM模块版本
-
+char Mcc[7];
+char Mnc[7];
+char Cid[10];
+char Lac[10];
 
 
 //向GSM内核发送AT指令前，打包要发送的AT指令
@@ -1085,6 +1087,8 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 
 	case AT_CPSI:
 	{
+		char data_temp[10] = {0};
+
 		//+CPSI: LTE NB-IOT,Online,460-00,0x1D2B,47393342,9,EUTRAN-BAND8,3686,0,0,-10,-62,-52,18
 		if ((p1 = strstr(pSrc, "+CPSI:")) != NULL)
 		{
@@ -1093,27 +1097,61 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 			*temType = AT_NULL;
 
 			ptem = strstr(pSrc, ",");
+			ptem ++;
+			ptem = strstr(ptem, ",");			//指针指向第二个逗号
+			p1 = ptem + 1;						//p1指向MCC的第一个数
 
-			if(ptem != NULL)
+			//判断MCCMNC格式是否为xxx-xx
+			ptem = strstr(ptem, "-");
+			if((ptem - p1) > sizeof(Mcc))
 			{
-				ptem ++;
-				ptem = strstr(ptem, ",");			//指针指向第二个逗号
-				p1 = ptem + 1;						//p1指向MCC的第一个数
-
-				//判断MCCMNC格式是否为xxx-xx
-				ptem = strstr(ptem, "-");
-				if((ptem - p1) != 3)
-				{
-					break;
-				}
+				break;
 			}
 
-			if (ptem != NULL)
+			memset(Mcc,0,sizeof(Mcc));
+			memset(Mnc,0,sizeof(Mnc));
+
+			strncpy(Mcc, p1, ptem - p1);					//拷贝MCC
+			p1 = ptem + 1;
+			ptem = strstr(p1, ",");
+			if(ptem - p1 < sizeof(Mnc))
 			{
-				strncpy(MccMnc, p1, 3);					//拷贝3位的MCC
-				p1 += 4;
-				strncpy(&MccMnc[3], p1, 2);				//拷贝2位的MNC
+				strncpy(Mnc, p1, ptem - p1);				//拷贝MNC
 			}
+
+			//提取LAC或TAC
+			p1 = ptem + 3;									//指向LAC第一个字节，但需要剔除0x，所以+3
+			ptem = strstr(p1, ",");
+			memset(Lac,0,sizeof(Lac));
+			if(ptem - p1 < sizeof(Lac))
+			{
+				strncpy(Lac, p1, ptem - p1);				//拷贝LAC，十六进制
+			}		
+			
+			//提取CID
+			p1 = ptem + 1;									//指向CID第一个字节
+			ptem = strstr(p1, ",");
+			memset(Cid,0,sizeof(Cid));
+			if(ptem - p1 < sizeof(Cid))
+			{
+				strncpy(Cid, p1, ptem - p1);				//拷贝CID,十进制
+			}	
+
+			BcdStr2HexStr(Mcc,data_temp);
+			memset(Mcc,0,sizeof(Mcc));
+			strcpy(Mcc,data_temp);
+
+			memset(data_temp,0,sizeof(data_temp));
+
+			BcdStr2HexStr(Mnc,data_temp);
+			memset(Mnc,0,sizeof(Mnc));
+			strcpy(Mnc,data_temp);	
+
+			memset(data_temp,0,sizeof(data_temp));
+
+			BcdStr2HexStr(Cid,data_temp);
+			memset(Cid,0,sizeof(Cid));
+			strcpy(Cid,data_temp);		
 		}
 		else 
 		{
@@ -1123,7 +1161,6 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 		}
 	}
 	break;
-
 
 	case AT_CBC:
 		if (strstr(pSrc, "+CBC:"))
@@ -1563,6 +1600,13 @@ void Flag_check(void)
 		Test.NeedCheckATI = 0;
 		AtType = AT_ATI;
 		return;
+	}
+
+	if(Flag.NeedcheckLBS)
+	{
+		Flag.NeedcheckLBS = 0;
+		AtType = AT_CPSI;
+		return;		
 	}
 
 }

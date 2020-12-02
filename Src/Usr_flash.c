@@ -92,7 +92,8 @@ static void FS_FactroyValue(void)
 	Fs.BKSavedCnt = 0;
 	Fs.BkSendCnt = 0;
 	Fs.BkSendLen = 0;
-	Fs.Interval = 120;
+	Fs.Interval = 300;
+	Fs.SensorCkInterval = 10;
 	Fs.HaveSetApn = 0;
 	Fs.Sensor = 4;
 	Fs.FotaSwitch = 0x01;
@@ -169,12 +170,16 @@ void FS_InitValue(void)
 	#else
 	printf("Device suitable for China\r\n\r\n");
 	#endif
-	printf("Device IMEI: 	 %s\r\n",Fs.DeviceImei);
-	printf("Fs.IpAdress: 	 %s\r\n",Fs.IpAdress);
-	printf("Fs.IpPort:       %s\r\n",Fs.IpPort);
-	printf("Fs.ApnName: 	 %s\r\n",Fs.ApnName);
-	printf("Fs.GprsUserName: %s\r\n",Fs.GprsUserName);
-	printf("Fs.GprsPassWord: %s\r\n",Fs.GprsPassWord);
+	printf("Device IMEI:             %s\r\n",Fs.DeviceImei);
+	printf("Fs.IpAdress:             %s\r\n",Fs.IpAdress);
+	printf("Fs.IpPort:               %s\r\n",Fs.IpPort);
+	printf("Fs.ApnName: 	           %s\r\n",Fs.ApnName);
+	printf("Fs.GprsUserName:         %s\r\n",Fs.GprsUserName);
+	printf("Fs.GprsPassWord:         %s\r\n",Fs.GprsPassWord);
+	printf("Fs.Co2WarnThreshold:     %d\r\n",Fs.Co2WarnThreshold);
+	printf("Fs.Co2AlarmThreshold: 	 %d\r\n",Fs.Co2AlarmThreshold);
+	printf("Fs.SensorCkInterval:     %d\r\n",Fs.SensorCkInterval);
+	printf("Fs.AutoCalibrateState:   0x%x\r\n",Fs.AutoCalibrateState);
 	printf("\r\n-----------------------------------------\r\n");
 }
 

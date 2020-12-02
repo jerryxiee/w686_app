@@ -38,8 +38,10 @@ typedef struct{
 	unsigned short  Interval;           //定位包上传间隔	
 	unsigned char 	FotaSwitch;			//远程升级开关，0xAA为关闭远程升级，其他为开启远程升级
 	unsigned char 	HaveSetMode;		//是否设置模块网络模式
-	unsigned short 	Co2WarnThreshold; //二氧化碳传感器告警值
+	unsigned short 	Co2WarnThreshold; 	//二氧化碳传感器告警值
 	unsigned short  Co2AlarmThreshold;	//二氧化碳传感器报警值
+	unsigned short  SensorCkInterval;   //传感器检测时间间隔
+	unsigned char 	AutoCalibrateState;	//二氧化碳传感器自动校准状态；1表示关闭，其他表示开启
 }FS;
 #endif
 

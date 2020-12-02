@@ -1,12 +1,19 @@
 #include "usr_sensor.h"
 
-static uint8_t  check_co2_sf[4] = {0x11,0x01,0x01,0xED};	                            //四方光电查询指令
-static uint8_t  check_co2_ws[9] = {0xFF,0x01,0x86,0x00,0x00,0x00,0x00,0x00,0x79};	//纬胜查询指令
-static uint8_t  check_co2_rd[8] = {0xFE,0x04,0x00,0x03,0x00,0x01,0xD5,0xC5};		    //瑞典s8查询指令
-static uint8_t  check_sf_version[4] = {0x11,0x01,0x1E,0xD0};	                        //四方光电查询固件版本
 
-uint8_t  sensor_type;	                    //传感器类型，程序会依次发送三款传感器查询指令，通过判断回复来确认传感器类型：1，四方光电；2，纬胜；3，瑞典S8
-uint8_t  sensor_check_step;		            //轮询传感器步数
+static uint8_t  check_co2_ws[9] = {0xFF,0x01,0x86,0x00,0x00,0x00,0x00,0x00,0x79};	    //纬胜查询指令
+static uint8_t  calibrate_co2_ws[9] = {0xFF,0x01,0x87,0x00,0x00,0x00,0x00,0x00,0x78};   //伟盛零点校准指令
+static uint8_t  auto_calibrate_on[9] = {0xFF,0x01,0x79,0xA0,0x00,0x00,0x00,0x00,0xE6};  //开启自动校准
+static uint8_t  auto_calibrate_off[9] = {0xFF,0x01,0x79,0x00,0x00,0x00,0x00,0x00,0x86}; //关闭自动校准
+
+static uint8_t  check_co2_rd[8] = {0xFE,0x04,0x00,0x03,0x00,0x01,0xD5,0xC5};		    //瑞典s8查询指令
+
+static uint8_t  check_sf_version[4] = {0x11,0x01,0x1E,0xD0};	                        //四方光电查询固件版本
+static uint8_t  check_co2_sf[4] = {0x11,0x01,0x01,0xED};	                            //四方光电查询指令
+
+
+uint8_t         sensor_type;	            //传感器类型，程序会依次发送三款传感器查询指令，通过判断回复来确认传感器类型：1，四方光电；2，纬胜；3，瑞典S8
+uint8_t         sensor_check_step;		    //轮询传感器步数
 uint16_t        co2_module_value;           //二氧化碳模块传感器读取的二氧化碳值
 float           humidity_value;             //SHT31湿度值，单位%
 float           temperature_value;          //SHT31温度值，单位摄氏度
@@ -88,7 +95,7 @@ void Get_CO2_Sensor_Type(void)
 		get_co2_uart_sensor(check_sf_version,sizeof(check_sf_version));
 	}
 
-    LL_mDelay(300);
+    LL_mDelay(100);
 }
 
 
@@ -447,6 +454,39 @@ void Sensor_Handle(void)
         Flag.NeedCheckCO2Value = 0;
         Read_CO2_Value();
         return;
+    }
+
+    if(Flag.NeedCalibrateCo2)
+    {
+        Flag.NeedCalibrateCo2 = 0;
+        //针对19B型号的sensor校准
+        if(sensor_type == 2)
+        {
+            UART_Send(USART2,calibrate_co2_ws,sizeof(calibrate_co2_ws));
+        }
+        return;
+    }
+
+    if(Flag.NeedCloseAutoCalib)
+    {
+        Flag.NeedCloseAutoCalib = 0;
+        //针对19B型号的sensor
+        if(sensor_type == 2)
+        {
+            UART_Send(USART2,auto_calibrate_off,sizeof(auto_calibrate_off));
+        }
+        return;        
+    }
+
+    if(Flag.NeedOpenAutoCalib)
+    {
+        Flag.NeedOpenAutoCalib = 0;
+        //针对19B型号的sensor
+        if(sensor_type == 2)
+        {
+            UART_Send(USART2,auto_calibrate_on,sizeof(auto_calibrate_on));
+        }
+        return;        
     }
 }
 
