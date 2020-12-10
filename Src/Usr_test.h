@@ -5,6 +5,8 @@
 #define TESTRESULTADDR_1      0x00030000 + 0x20
 #define TESTRESULTADDR_2      0x00030000 + 0x40
 #define TESTRESULTADDR_3      0x00030000 + 0x60
+#define TESTRESULTADDR_4      0x00030000 + 0x80         //测试结果汇总存放地址
+
 #ifndef _TEST_
 #define _TEST_
 typedef struct{

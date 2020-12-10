@@ -449,41 +449,9 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 		}
 		break;
 
-	case AT_ATI:
-		//提取模块的版本信息
-		#if 0
-		if ((p1 = strstr(pSrc, "APRev:")) != NULL)
-		{
-			p1 += 6;
-			memset(GsmRev,0,sizeof(GsmRev));
-			ptem = strstr(p1, "\r\n");
-
-			if(ptem - p1 > sizeof(GsmRev))
-			{
-				strncpy(GsmRev,p1,ptem - p1);
-				Test.GetModuleAti = 1;
-			}
-		}
-		//提起模块的IMEI
-		if ((p1 = strstr(pSrc, "IMEI:")) != NULL)
-		{
-			p1 += 5;
-			memset(IMEI,0,sizeof(IMEI));
-			ptem = strstr(p1, "\r\n");
-
-			if(ptem - p1 > sizeof(IMEI))
-			{
-				strncpy(IMEI,p1,ptem - p1);
-				Test.GetIMEI = 1;
-			}
-		}	
-		#endif
-		*temType = AT_NULL;
-		AtDelayCnt = 0;
-		back = 1;
-		break;
 
 	case AT_CCID:
+
 		if ((p1 = strstr(pSrc, "OK")) != NULL)
 		{
 			p1 = strstr(pSrc, "\r\n");
@@ -1241,18 +1209,24 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 				if((*ptem >= '0')&&(*ptem <= '9'))
 				{
 					memset(IMEI,0,16);
-					if(strlen(IMEI_MANUAL) == 15)
+
+					if(strlen(IMEI_MANUAL) == 15)		//如果手动设定的IMEI，优先使用手动设置的IMEI
 					{
 						strcpy(IMEI,IMEI_MANUAL);
 					}
-					else
+					else if(strlen(IMEI_ID) == 15)		//如果外部写入了IMEI，使用外部写入的IMEI
+					{
+						strcpy(IMEI,IMEI_ID);
+					}
+					else								//如果上述两种情况都没有发生，使用模组自己的IMEI
 					{
 						strncpy(IMEI,ptem,15);
-						if(strcmp(Fs.DeviceImei,IMEI) != 0)
-						{
-							strncpy(Fs.DeviceImei,IMEI,sizeof(Fs.DeviceImei));
-							Flag.NeedUpdateFs = 1;
-						}
+					}
+
+					if(strcmp(Fs.DeviceImei,IMEI) != 0)		//如果IMEI和自身保存的有变化，更新
+					{
+						strncpy(Fs.DeviceImei,IMEI,sizeof(Fs.DeviceImei));
+						Flag.NeedUpdateFs = 1;
 					}
 				}
 			}
@@ -1620,13 +1594,6 @@ void Flag_check(void)
 	{
 		UpgInfo.NeedUpdata = 0;
 		AtType = AT_HTTPTOFS;
-		return;
-	}
-
-	if (Test.NeedCheckATI)
-	{
-		Test.NeedCheckATI = 0;
-		AtType = AT_ATI;
 		return;
 	}
 

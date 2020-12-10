@@ -1,12 +1,16 @@
 #include "usr_main.h"
 
+char Get0_result[10];
+char Get2_result[10];
+char Get3_result[10];
+char GetALL_result[100];
+
 TEST Test;
 
 void Test_Init(void)
 {
     Test.TestStep = 0xFF;
     Test.WaitEnterTest = 15;
-    Test.NeedCheckATI = 1;
     UART_Send(USART3,"Device can enter Test mode by send Test command in 10s\r\n",56);
 }
 
@@ -17,13 +21,48 @@ void Test_Receive(void)
     char *p1 = NULL;
     char temp_buf[20] = {0};
     char read_buf[20] = {0};
-    char send_buf[50] = {0};
+    char send_buf[150] = {0};
 
     if((Test.WaitEnterTest > 0) && (strstr(Uart3Buf, "AT^TST")))
 	{
 		Test.TestStep = 0;
         Test.InTesting = 1;
 	}
+
+    //外部IMEI设置：AT^SETIMEI=123456789012345\r\n
+    if(strstr(Uart3Buf, "AT^SETIMEI="))    
+    {
+        p0 = strstr(Uart3Buf, "AT^SETIMEI=");
+        p0 += 11;
+        p1 = strstr(p0, "\r\n");
+        if(p1 - p0 != 15) 
+        {
+            printf("The IMEI data format error\r\n");
+            UART_Send(USART3,"The IMEI data format error\r\n",29); 
+            return;
+        }  
+        strncpy(temp_buf,p0,p1 - p0);
+        strcat(temp_buf,"#");     
+        EXFLASH_EraseSector(IMEIADDR);
+        EXFLASH_WriteBuffer((u8 *)temp_buf,IMEIADDR,strlen(temp_buf));
+        EXFLASH_ReadBuffer((u8 *)read_buf,IMEIADDR,strlen(temp_buf));   
+
+        if(memcmp(temp_buf,read_buf,strlen(temp_buf)) == 0)
+        {
+            p1 = strstr(temp_buf, "#");
+            *p1 = 0;                                             //删除“#”
+            memset(GetALL_result,0,sizeof(GetALL_result));
+            EXFLASH_ReadBuffer((u8 *)GetALL_result,TESTRESULTADDR_4,sizeof(GetALL_result));
+            p1 = strstr(GetALL_result, "\r\n");
+            *p1 = 0; 
+            sprintf(send_buf,"^DEV@SETIMEI=%s;%s\r\n",temp_buf,GetALL_result);
+            UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));        
+        }   
+        else
+        {
+            UART_Send(USART3,"The IMEI Save Failed\r\n",23); 
+        }
+    }
 
     if(Test.TestStep == 0xFF)      
     {
@@ -64,6 +103,9 @@ void Test_Receive(void)
             UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));     
         }
 
+        memset(GetALL_result,0,sizeof(GetALL_result));
+        sprintf(GetALL_result,"IMEI=%s;ATI=%s;CCID=%s;GET0=%s;GET2=%s;GET3=%s;\r\n",IMEI_MODULE,GsmRev,CCID,Get0_result,Get2_result,Get3_result);
+        EXFLASH_WriteBuffer((u8 *)GetALL_result,TESTRESULTADDR_4,strlen(GetALL_result));
         //测试完成，清除LED测试模式
         Clear_Leds();	
 
@@ -125,10 +167,11 @@ void Test_Receive(void)
     }
     else if(strstr(Uart3Buf, "AT^GET0="))
     {
-        EXFLASH_ReadBuffer((u8 *)read_buf,TESTRESULTADDR_0,sizeof(read_buf));
-        p0 = strstr(read_buf,"#");
+        memset(Get0_result,0,sizeof(Get0_result));
+        EXFLASH_ReadBuffer((u8 *)Get0_result,TESTRESULTADDR_0,sizeof(Get0_result));
+        p0 = strstr(Get0_result,"#");
         *p0 = 0;
-        sprintf(send_buf,"^DEV@GET0=%s\r\n",read_buf);
+        sprintf(send_buf,"^DEV@GET0=%s\r\n",Get0_result);
         UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
     }
     else if(strstr(Uart3Buf, "AT^GET1="))
@@ -141,18 +184,20 @@ void Test_Receive(void)
     }
     else if(strstr(Uart3Buf, "AT^GET2="))
     {
-        EXFLASH_ReadBuffer((u8 *)read_buf,TESTRESULTADDR_2,sizeof(read_buf));
-        p0 = strstr(read_buf,"#");
+        memset(Get2_result,0,sizeof(Get2_result));
+        EXFLASH_ReadBuffer((u8 *)Get2_result,TESTRESULTADDR_2,sizeof(Get2_result));
+        p0 = strstr(Get2_result,"#");
         *p0 = 0;
-        sprintf(send_buf,"^DEV@GET2=%s\r\n",read_buf);
+        sprintf(send_buf,"^DEV@GET2=%s\r\n",Get2_result);
         UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
     }
     else if(strstr(Uart3Buf, "AT^GET3="))
     {
-        EXFLASH_ReadBuffer((u8 *)read_buf,TESTRESULTADDR_3,sizeof(read_buf));
-        p0 = strstr(read_buf,"#");
+        memset(Get3_result,0,sizeof(Get3_result));
+        EXFLASH_ReadBuffer((u8 *)Get3_result,TESTRESULTADDR_3,sizeof(Get3_result));
+        p0 = strstr(Get3_result,"#");
         *p0 = 0;
-        sprintf(send_buf,"^DEV@GET3=%s\r\n",read_buf);
+        sprintf(send_buf,"^DEV@GET3=%s\r\n",Get3_result);
         UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
     }
 
@@ -223,7 +268,7 @@ void Test_Handle(void)
             case 2:                     //测试步骤2，输出模块版本及IMEI   
                 if((Test.GetIMEI) && (Test.GetModuleAti))
                 {
-                    sprintf(SendDataTemp,"^DEV@IMEI=%s;Module ATI=%s\r\n",IMEI,GsmRev);
+                    sprintf(SendDataTemp,"^DEV@IMEI=%s;Module ATI=%s\r\n",IMEI_MODULE,GsmRev);
                     UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
                     Test.TestOverStep = Test.TestStep;
                 }  

@@ -3,7 +3,7 @@
 unsigned char ResetMouldeCnt_1; 		//模块因为没有信号重启次数
 unsigned char NoAckRstCnt;				//模块连续因为没有开机应答重启次数，达到5次后重启设备
 unsigned char NoSimCardCnt;				//模块因为NOSIM卡重启次数，达到三次后不再重启，需要装卡后重启系统
-
+GSMON GsmOn;
 
 void Usr_ModuleGoSleep(void)
 {
@@ -94,18 +94,106 @@ void Usr_ModuleWakeUp(void)
 	AtType = AT_NULL;
 }
 
+void GsmOn_Timer_Init(void)
+{
+	GsmOn.PowerOffWaitCnt = 10;
+	GsmOn.PowerOnWaitCnt = 0;
+	GsmOn.PowerKeyOffWaitCnt = 0;
+	GsmOn.PowerKeyOnWaitCnt = 0;
+	GsmOn.WaitSendAtCnt = 0;
+	GsmOn.PowerOnStep = 0;
+	POWER_OFF;
+}
+
 void Usr_ModuleTurnOn(void)
 {
 	unsigned char i = 3;
+	static u8 NeedInitGsm = 1;
 
 	if (!Flag.NeedModuleOn)
 	{
 		return;
 	}
  
-	Flag.NeedModuleOn = 0;
+
+#if 1
+	if(NeedInitGsm)
+	{
+		NeedInitGsm = 0;
+		GsmOn_Timer_Init();
+		printf("Ready turn on the GSM module\r\n");
+	}
+
+	switch (GsmOn.PowerOnStep)
+	{
+		case 0:		
+			//断开模块电源1s后，开启电源，持续3秒							
+			if(GsmOn.PowerOffWaitCnt == 0)
+			{
+				GsmOn.PowerOnStep ++;
+				GsmOn.PowerOnWaitCnt = 30;
+				POWER_ON;
+			}
+			break;
+
+		case 1:
+			//开启模块电源3s完成后，先保持powerkey高电平，持续300毫秒
+			if(GsmOn.PowerOnWaitCnt == 0)
+			{
+				GsmOn.PowerOnStep ++;
+				GsmOn.PowerKeyOffWaitCnt = 3;
+				GSM_KEY_OFF;
+			}
+			break;
+
+		case 2:
+			//保持powerkey高电平300毫秒完成后，拉低powerkey，持续1500毫秒
+			if(GsmOn.PowerKeyOffWaitCnt == 0)
+			{
+				GsmOn.PowerOnStep ++;
+				GsmOn.PowerKeyOnWaitCnt = 15;
+				GSM_KEY_ON;
+			}
+			break;
+
+		case 3:
+			//拉低powerkey 1500毫秒完成后，拉高powerkey，持续300毫秒
+			if(GsmOn.PowerKeyOnWaitCnt == 0)
+			{
+				GsmOn.PowerOnStep ++;
+				GsmOn.PowerKeyOffWaitCnt = 3;
+				GSM_KEY_OFF;
+			}
+			break;
+
+		case 4:
+			//保持powerkey高电平300毫秒完成后，等待2秒后，开始发送AT指令
+			if(GsmOn.PowerKeyOffWaitCnt == 0)
+			{
+				GsmOn.PowerOnStep ++;
+				GsmOn.WaitSendAtCnt = 20;
+				GSM_KEY_OFF;
+			}
+			break;
+
+		case 5:
+			//等待2秒后，开始发送AT指令
+			if(GsmOn.WaitSendAtCnt == 0)
+			{
+				//重新置位需要初始化标志，下次重启模块时就会重新初始化
+				GsmOn.PowerOnStep ++;
+				NeedInitGsm = 1;	
+			}
+			break;
+		default:
+			break;
+	}
+
+	if(GsmOn.PowerOnStep != 6)	return;
+#else
 
 	printf("Ready turn on the GSM module\r\n");
+
 	POWER_OFF;
 	delay_ms(1000);
 
@@ -126,13 +214,14 @@ void Usr_ModuleTurnOn(void)
 	delay_ms(300);
 
 	delay_ms(2000);		//延时两秒，之后准备连续发送AT指令唤醒模块
+#endif
+	Flag.NeedModuleOn = 0;
 	Flag.NeedWakeMdByAt = 1;
 	Flag.RcvAtAckOK = 0;
 	Flag.HaveSmsReady = 0;
 	Flag.HaveGetCCID = 0;
 	Flag.PwrOnModule = 1;
 	Flag.NeedSetNtp = 1;
-
 	ActiveTimer = ACTIVE_TIME;	//模块开机后需要较长时间的初始化和联网，保证进入休眠前完成这些操作
 }
 

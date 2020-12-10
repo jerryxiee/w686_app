@@ -128,11 +128,12 @@ void FS_FactroyValueFile(void)
 
 void FS_InitValue(void)
 {
+	char *p1 = NULL;
+	u8   i = 0;
 
 	memset(&Fs, 0, sizeof(Fs));
 	STMFLASH_Read(FLASH_SAVE_ADDR, (u32 *)&Fs, (u16)(sizeof(Fs))/4);
-//	EXFLASH_ReadArray(FLASH_UPG_ADDR, (char *)&FsUpg, sizeof(FsUpg));
-	
+
 	//flash空白 要初始化
 //	if ('O' != Fs.Ok[0] || 'K' != Fs.Ok[1])
 	if(strcmp(Fs.IpAdress,"device2.iotpf.mb.softbank.jp") != 0)
@@ -156,12 +157,30 @@ void FS_InitValue(void)
 		Flag.NeedUpgradeResultResponse = 1;
 	}
 
-	// printf("\r\nFsUpg.UserID:%s", FsUpg.UserID);
-	// printf("\r\nFsUpg.ApnName:%s", FsUpg.ApnName);
-	// printf("\r\nFsUpg.AppIpPort:%s\r\nFsUpg.AppIpPort:%s", FsUpg.AppIpPort, FsUpg.AppIpAdress);
-	// printf("\r\nFsUpg.UpgMode:%02X\r\nFsUpg.UpgErrors:%02X\r\nFsUpg.UpgEnJamp:%02X", FsUpg.UpgMode, FsUpg.UpgErrors, FsUpg.UpgEnJamp);
-	// printf("\r\nFsUpg.UpgNeedSendSms:%X\r\nFsUpg.UpgNeedSendGpFsUpg:%X\r\nFs.AppLenBuf:%X", FsUpg.UpgNeedSendSms, FsUpg.UpgNeedSendGprs, FsUpg.AppLenBuf);
-	// printf("\r\nFs.TftpErrorCode:%s\r\n", FsUpg.TftpErrorCode);
+	//读取外部flash中的IMEI_ID号，并判断合法性
+	memset(IMEI_ID,0,sizeof(IMEI_ID));
+	EXFLASH_ReadBuffer((u8 *)IMEI_ID,IMEIADDR,sizeof(IMEI_ID));   
+	if(strstr(IMEI_ID, "#"))							//如果读取到结束符
+	{
+		p1 = strstr(IMEI_ID, "#");
+
+		for(i = 0;i < 15;i++)
+		{
+			if(('0' <= IMEI_ID[i]) && ('9' >= IMEI_ID[i])) {}
+			else break;
+		}
+
+		if((p1 - IMEI_ID == 15) && (i == 15))			//判断IMEI是否合法
+		{
+			*p1 = 0;  									//清除末尾结束符
+		}
+		else
+		{
+			memset(IMEI_ID,0,sizeof(IMEI_ID));			//读取的IMEI不合法，清除，使用模组自身的IMEI
+		}
+	}
+	
+
 
 	printf("\r\n------Device parameters as follows:------\r\n\r\n");
 	#if USR_FOR_JP

@@ -424,6 +424,28 @@ void TIMER_BaseCntHandle(void)
 		Test.WaitTestCnt --;
 	}
 
+
+	if(GsmOn.PowerOffWaitCnt > 0)
+	{
+		GsmOn.PowerOffWaitCnt --;
+	}
+	if(GsmOn.PowerOnWaitCnt > 0)
+	{
+		GsmOn.PowerOnWaitCnt --;
+	}
+	if(GsmOn.PowerKeyOffWaitCnt > 0)
+	{
+		GsmOn.PowerKeyOffWaitCnt --;
+	}
+	if(GsmOn.PowerKeyOnWaitCnt > 0)
+	{
+		GsmOn.PowerKeyOnWaitCnt --;
+	}
+	if(GsmOn.WaitSendAtCnt > 0)
+	{
+		GsmOn.WaitSendAtCnt --;
+	}
+	
 	// Flag.NeedGetFloodSensor = 1;
 	// return;
 

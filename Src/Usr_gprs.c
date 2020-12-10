@@ -13,7 +13,9 @@ char UpgradeSendBuf[UPDRADELEN];
 char CCID[30];
 char AtSendbuf[SCIBUFLEN]; /*定义一个数组存储发送数据*/
 char GprsContent[GPRSCONTLEN];
-char IMEI[16];
+char IMEI[16];					//系统最终会使用的IMEI
+char IMEI_MODULE[16];			//GSM模块的IMEI
+char IMEI_ID[16];				//自行设定的IMEI
 char RespServiceBuf[100];		//用于应答平台的内容
 int Usr_Atoi(char *pSrc)
 {

@@ -230,6 +230,7 @@ void At_Receive(void)
 		}
 	}
 
+
 	if ((p1 = strstr(Uart1Buf, "APRev:")) != NULL)
 	{
 		p1 += 6;
@@ -248,12 +249,12 @@ void At_Receive(void)
 	if ((p1 = strstr(Uart1Buf, "IMEI:")) != NULL)
 	{
 		p1 += 5;
-		memset(IMEI,0,sizeof(IMEI));
+		memset(IMEI_MODULE,0,sizeof(IMEI_MODULE));
 		ptem = strstr(p1, "\r\n");
 
-		if(ptem - p1 < sizeof(IMEI))
+		if(ptem - p1 < sizeof(IMEI_MODULE))
 		{
-			strncpy(IMEI,p1,ptem - p1);
+			strncpy(IMEI_MODULE,p1,ptem - p1);
 			Test.GetIMEI = 1;
 		}
 	}

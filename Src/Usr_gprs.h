@@ -63,6 +63,8 @@ extern char UserIDBuf[16];
 extern char RespServiceBuf[100];
 extern char CCID[30];
 extern char IMEI[16];	
+extern char IMEI_ID[16];
+extern char IMEI_MODULE[16];
 
 int Usr_Atoi(char *pSrc);
 void GPRS_Send_CC888(void);

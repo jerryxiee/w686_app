@@ -17,7 +17,7 @@ unsigned char CheckModeCnt;		//模块开机后，等待主动上报内容，超�
 const unsigned char SoftwareBuilt[50] = {0};
 char Edition[50] = {0};
 
-char Edition_STD[50] = {"W686IB_V0.0.1_T01"};				//程序的稳定版本，手动设置版本型号
+char Edition_STD[50] = {"W686IB_V0.0.1_T02"};				//程序的稳定版本，手动设置版本型号
 char HardWare_Edition[50] = {"TY197_MAIN_V2.0"};		//硬件版本，手动设置版本型号
 
 u8 Built_year[5] = {'\0'};
