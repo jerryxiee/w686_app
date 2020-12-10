@@ -29,6 +29,9 @@ extern unsigned int  Timestamp;
 extern unsigned int  baseSecCnt;
 extern unsigned char AT_CBC_IntervalTemp; 
 extern unsigned char WaitRestart;
+extern unsigned short Start_Fota_Rang;
+extern unsigned short System_Rang_Data;
+
 void TIMER_Init(void);
 void delay_us(unsigned int us);
 void delay_ms(unsigned int us);

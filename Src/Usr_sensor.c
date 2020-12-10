@@ -31,6 +31,7 @@ void Sensor_Init(void)
 	sensor_type = 0xFE;		//开始查询模块标志
         
     CO2_POWER_EN_SET;           //开启二氧化碳传感器供电
+ //   CO2_POWER_EN_RESET;           //开启二氧化碳传感器供电
     SHT31_POWER_EN_RESET;       //开启SHT31和CCS811传感器供电
     CCS811_WAKE_RESET;
 
@@ -84,7 +85,7 @@ void Get_CO2_Sensor_Type(void)
 		else
 		{
 			sensor_type = 0;
-            Flag.Co2SensorError = 1;
+  //          Flag.Co2SensorError = 1;
 			printf("Can't find CO2 sensor!\n");
 		}
 	}
@@ -95,7 +96,7 @@ void Get_CO2_Sensor_Type(void)
 		get_co2_uart_sensor(check_sf_version,sizeof(check_sf_version));
 	}
 
-    LL_mDelay(100);
+    LL_mDelay(300);                 //发送数据后，需要等待一会传感器应答完成后，再去检测接收到的数据
 }
 
 
@@ -190,13 +191,13 @@ void CO2_Data_Receive(void)
     {
         co2_module_value = 5000;       
     } 
-    else if(co2_module_value < 400)
+    else if((co2_module_value < 400) && (co2_module_value > 0))
     {
         co2_module_value = 400;        
     }
     else if(co2_module_value == 0)      //读取不到传感器数据
     {
-        Flag.Co2SensorError = 1;
+  //      Flag.Co2SensorError = 1;
     }
     else                                //传感器数据正常
     {

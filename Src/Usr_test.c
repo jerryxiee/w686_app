@@ -214,7 +214,7 @@ void Test_Handle(void)
         switch (Test.TestStep)
         {
             case 1:                     //测试步骤1，输出软件版本及硬件版本    
-                sprintf(SendDataTemp,"^TST@SW=%s;HW=%s\r\n",Edition,HardWare_Edition);
+                sprintf(SendDataTemp,"^TST@SW=%s;HW=%s\r\n",Edition_STD,HardWare_Edition);
                 UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
                 Test.TestOverStep = Test.TestStep;
                 

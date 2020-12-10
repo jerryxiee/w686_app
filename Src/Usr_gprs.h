@@ -24,21 +24,20 @@ typedef enum{
 #define TFTPLEN    		30
 #define GPRSCONTLEN		200
 
-#define USR_FOR_JP		0				//切换在中国使用和日本使用开关，0为中国使用，1为日本使用
+#define USR_FOR_JP		1				//切换在中国使用和日本使用开关，0为中国使用，1为日本使用
 #define SENSOR_3		1
 #define NO_SLEEP		1
-#define USR_TEST_PLAM		1		//使用测试服
 
 #if USR_FOR_JP
 	#define IMEI_MANUAL	    ""
 	#define JP_AT_USE		1
 	#define USE_SOFTSIM		0
+	#define USR_PLAM_TYPE	0		//0,是量产服务器，1是使用测试服务器，2是标准服务器
 #else
-	//#define IMEI_MANUAL	"352656103523604"
-	//#define IMEI_MANUAL	"352656103473735"
 	#define IMEI_MANUAL	"999999999999999"
 	//#define IMEI_MANUAL	""
 	#define USE_SOFTSIM		0
+	#define USR_PLAM_TYPE		1		//使用测试服
 
 #endif
 
@@ -62,7 +61,7 @@ extern char AtSendbuf[SCIBUFLEN];
 extern char UpgradeSendBuf[UPDRADELEN];
 extern char UserIDBuf[16];
 extern char RespServiceBuf[100];
-extern char CCID[21];
+extern char CCID[30];
 extern char IMEI[16];	
 
 int Usr_Atoi(char *pSrc);

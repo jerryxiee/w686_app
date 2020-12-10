@@ -17,8 +17,7 @@ unsigned char CheckModeCnt;		//模块开机后，等待主动上报内容，超�
 const unsigned char SoftwareBuilt[50] = {0};
 char Edition[50] = {0};
 
-
-char Edition_STD[50] = {"w868_SIM7080G_V0.0.6"};				//程序的稳定版本，手动设置版本型号
+char Edition_STD[50] = {"W686IB_V0.0.1_T01"};				//程序的稳定版本，手动设置版本型号
 char HardWare_Edition[50] = {"TY197_MAIN_V2.0"};		//硬件版本，手动设置版本型号
 
 u8 Built_year[5] = {'\0'};
@@ -72,6 +71,7 @@ int main(void)
 		Flag_Check();
 		Test_Handle();
 		WatchDogCnt = 0;
+
 	}
 }
 
@@ -93,6 +93,7 @@ void Usr_InitHardware(void)
 	EXFLASH_SpiInit();
 	Sensor_Init();	
 	Adc_init();
+//	Flooding_sensor_init();
 }
 
 
@@ -191,26 +192,88 @@ void Flag_Check(void)
 
 	if(Flag.NeedGetBatVoltage)
 	{
+		//实测电单片机电压为电池电压-0.3V，ADC采样必须要求单片机供电正常。所以电池电压小于3.6V时采样开始不准
+		//实测电池电压小于3.6V以下时，电池电压采样一直为3.65V左右，所以该ADC采样不适用3.65V以下
 		Flag.NeedGetBatVoltage = 0;
 		BatVoltage_Adc = (u32)Adc_Value_Get();
 		//转换成电池电压,470k和270k分压，采样值*（7.4/0.27）=采样值*2.74,修正到2.8；外加0.2v的二极管分压
 		BatVoltage_Adc = (BatVoltage_Adc * 290/100) + 200;		
-		printf("The battery voltage is %d mv\r\n",BatVoltage_Adc);
+		if(BatVoltage_Adc > 3650)
+		{
+			printf("The battery voltage is %d mv\r\n",BatVoltage_Adc);
+		}		
+		else
+		{
+			printf("The battery voltage less then 3650 mv\r\n");
+		}
 	}
 
-	if((UpgInfo.NeedWaitUpgrade)&&(Rtc.hour == 1))
+	if(Flag.NeedGetFloodSensor)
 	{
-		UpgInfo.NeedWaitUpgrade = 0;
+		Flag.NeedGetFloodSensor = 0;
+		Flooding_Adc = (u32)Adc_Value_Get();
+		//转换成电池电压,470k和270k分压，采样值*（7.4/0.27）=采样值*2.74,修正到2.8；外加0.2v的二极管分压
+		Flooding_Adc = (Flooding_Adc * 290/100) + 200;		
+//		printf("The Flooding sensor voltage is %d mv\r\n",Flooding_Adc);
+		if(Flooding_Adc < 5000)
+		{
+			LED_SENSOR_RED_ON;
+			LED_SENSOR_GREEN_ON;
+			LED_SENSOR_BLUE_ON;	
+		}	
+		else
+		{
+			LED_SENSOR_RED_OFF;
+			LED_SENSOR_GREEN_OFF;
+			LED_SENSOR_BLUE_OFF;			
+		}
+	}
 
+	if(UpgInfo.NeedWaitUpgrade)
+	{
+		static u16 backup_data = 0;
+
+		if((Rtc.hour != 1) && (!UpgInfo.HaveGetRankData))
+		{
+			return;
+		}
+
+		if(!UpgInfo.HaveGetRankData)
+		{
+			//产生一个0-10800范围内的随机数
+			Start_Fota_Rang = System_Rang_Data % (10800);
+			UpgInfo.HaveGetRankData = 1;
+			return;
+		}
+
+		if(Start_Fota_Rang > 0)
+		{
+			if((Start_Fota_Rang % 3 == 0)&&(Start_Fota_Rang != backup_data))
+			{
+				printf("Start Fota left time %ds\r\n",Start_Fota_Rang);
+				backup_data = Start_Fota_Rang;
+			}
+				
+			return;
+		}
+
+		UpgInfo.HaveGetRankData = 0;
+		UpgInfo.NeedWaitUpgrade = 0;
 		UpgInfo.NeedUpdata = 1;				//需要开始升级
-		Flag.NeedResponseFrist = 1;			//需要首先应答平台消息后在开始升级
-		Flag.NeedSendResponse = 1;
 		UpgInfo.RetryCnt = 2;				//升级失败重复次数
 
 		printf("Need upgrade the device,upgrade file name is: %s\r\n",FsUpg.AppFilePath);
-		sprintf(RespServiceBuf,"Fota file name is :%s,ready upgrade...",FsUpg.AppFilePath);
+
+		// Flag.NeedResponseFrist = 1;			//需要首先应答平台消息后在开始升级
+		// Flag.NeedSendResponse = 1;
+		// sprintf(RespServiceBuf,"Fota file name is :%s,ready upgrade...",FsUpg.AppFilePath);
 	}
 	
+	if(Flag.NeedGetRangData)
+	{
+		Flag.NeedGetRangData = 0;
+		System_Rang_Data = (u16)rand();
+	}
 }
 
 

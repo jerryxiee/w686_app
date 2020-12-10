@@ -84,21 +84,20 @@ static void FS_FactroyValue(void)
 
 	strcpy(Fs.IpPort, "8883"); 
 	strcpy(Fs.IpAdress, "device2.iotpf.mb.softbank.jp");
-	strcpy(Fs.ApnName, "mtc.gen"); 
+	strcpy(Fs.ApnName, "mtc.gen");  
 	strcpy(Fs.GprsUserName, "mtc"); 
 	strcpy(Fs.GprsPassWord, "mtc"); 
-
 
 	Fs.BKSavedCnt = 0;
 	Fs.BkSendCnt = 0;
 	Fs.BkSendLen = 0;
 	Fs.Interval = 300;
-	Fs.SensorCkInterval = 10;
+	Fs.SensorCkInterval = 5;
 	Fs.HaveSetApn = 0;
 	Fs.Sensor = 4;
 	Fs.FotaSwitch = 0x01;
 	Flag.HaveGetMccMnc = 0;
-	Fs.HaveSetMode = 0;
+	Fs.HaveSetMode = 1;						//初始化为1，默认不设置网络模式
 	Fs.Co2WarnThreshold = 1000;
 	Fs.Co2AlarmThreshold = 1500;
 }

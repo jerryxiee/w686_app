@@ -89,8 +89,8 @@ void AT_SendPacket(AT_TYPE temType, char *pDst)
 	case AT_ATI:								//查询模块固件版本
 		strcpy(pDst, "AT+SIMCOMATI\r\n");
 		break;
-	case AT_CNTP_SET:							//设置NTP服务器
-		strcpy(pDst, "AT+CNTP=\"ntp1.aliyun.com\",32\r\n");
+	case AT_CNTP_SET:							//设置NTP服务器，使用日本时区
+		strcpy(pDst, "AT+CNTP=\"ntp1.aliyun.com\",36\r\n");
 		break;
 	case AT_CNTP:								//同步网络时间
 		strcpy(pDst, "AT+CNTP\r\n");
@@ -139,11 +139,13 @@ void AT_SendPacket(AT_TYPE temType, char *pDst)
 	case AT_CFSTERM:							//释放缓存文件
 		strcpy(pDst, "AT+CFSTERM\r\n");
 		break;
-	case AT_SMCONF_URL:							//设置MQTT服务器地址和端口
-		#if USR_TEST_PLAM
+	case AT_SMCONF_URL:								//设置MQTT服务器地址和端口
+		#if (USR_PLAM_TYPE == 0)
 		sprintf(pDst, "AT+SMCONF=\"URL\",\"221.110.245.99\",%s\r\n",Fs.IpPort);	
-		#else
+		#elif (USR_PLAM_TYPE == 1)
 		sprintf(pDst, "AT+SMCONF=\"URL\",\"device2.iotpf.mb.softbank.jp\",%s\r\n",Fs.IpPort);	
+		#else
+		sprintf(pDst, "AT+SMCONF=\"URL\",\"221.110.245.99\",%s\r\n",Fs.IpPort);	
 		#endif
 		break;	
 	case AT_SMCONF_KEEP:						//设置保持时间
@@ -156,16 +158,22 @@ void AT_SendPacket(AT_TYPE temType, char *pDst)
 		sprintf(pDst, "AT+SMCONF=\"CLIENTID\",\"%s\"\r\n",IMEI); //20150708_5
 		break;
 	case AT_SMCONF_PASSWORD:					//设置登入密码  
+		#if (USR_PLAM_TYPE == 0)
+		strcpy(pDst, "AT+SMCONF=\"PASSWORD\",\"YN96rc4so&oePF8-Y\"\r\n");
+		#else
 		strcpy(pDst, "AT+SMCONF=\"PASSWORD\",\"UjvJri4-48fYPAjL#\"\r\n");
+		#endif
 		break;
 	case AT_SMCONF_QOS: 
-		strcpy(pDst, "AT+SMCONF=\"QOS\",0\r\n");
+		strcpy(pDst, "AT+SMCONF=\"QOS\",1\r\n");
 		break;
 	case AT_SMCONF_USERNAME:					//设置登入用户名
-		#if USR_TEST_PLAM
-		sprintf(pDst, "AT+SMCONF=\"USERNAME\",\"C58D391E4-%s\"\r\n",IMEI);
-		#else
+		#if (USR_PLAM_TYPE == 0)
+		sprintf(pDst, "AT+SMCONF=\"USERNAME\",\"C333D8962-%s\"\r\n",IMEI);
+		#elif (USR_PLAM_TYPE == 1)
 		sprintf(pDst, "AT+SMCONF=\"USERNAME\",\"CDA68B264-%s\"\r\n",IMEI);
+		#else
+		sprintf(pDst, "AT+SMCONF=\"USERNAME\",\"C58D391E4-%s\"\r\n",IMEI);
 		#endif
 		break;
 	case AT_CSSLCFG:							//设置服务器使用的是TLS1.2方式连接
@@ -192,10 +200,12 @@ void AT_SendPacket(AT_TYPE temType, char *pDst)
 			GprsDataLen = Breakpointleng;
 		}
 
-		#if USR_TEST_PLAM
-		sprintf(pDst,"AT+SMPUB=\"/oneM2M/req/C58D391E4-%s/CSE1000/json\",%d,1,1\r\n",IMEI,GprsDataLen);
-		#else
+		#if (USR_PLAM_TYPE == 0)
+		sprintf(pDst,"AT+SMPUB=\"/oneM2M/req/C333D8962-%s/CSE1000/json\",%d,1,1\r\n",IMEI,GprsDataLen);
+		#elif (USR_PLAM_TYPE == 1)
 		sprintf(pDst,"AT+SMPUB=\"/oneM2M/req/CDA68B264-%s/CSE1000/json\",%d,1,1\r\n",IMEI,GprsDataLen);
+		#else
+		sprintf(pDst,"AT+SMPUB=\"/oneM2M/req/C58D391E4-%s/CSE1000/json\",%d,1,1\r\n",IMEI,GprsDataLen);
 		#endif
 
 		At_Timeout_Cnt = 300; 					//连接时间有时需要等待很久，这里最多等待150秒
@@ -205,17 +215,21 @@ void AT_SendPacket(AT_TYPE temType, char *pDst)
 		At_Timeout_Cnt = 300;
 		break;	
 	case AT_SMSUB:								//订阅消息
-		#if USR_TEST_PLAM
-		sprintf(pDst, "AT+SMSUB=\"/oneM2M/req/CSE1000/C58D391E4-%s/json\",1\r\n",IMEI);
-		#else
+		#if (USR_PLAM_TYPE == 0)
+		sprintf(pDst, "AT+SMSUB=\"/oneM2M/req/CSE1000/C333D8962-%s/json\",1\r\n",IMEI);
+		#elif (USR_PLAM_TYPE == 1)
 		sprintf(pDst, "AT+SMSUB=\"/oneM2M/req/CSE1000/CDA68B264-%s/json\",1\r\n",IMEI);
+		#else
+		sprintf(pDst, "AT+SMSUB=\"/oneM2M/req/CSE1000/C58D391E4-%s/json\",1\r\n",IMEI);
 		#endif
 		break;
 	case AT_SMUNSUB:							//取消订阅消息
-		#if USR_TEST_PLAM
-		sprintf(pDst, "AT+SMUNSUB=\"/oneM2M/req/CSE1000/C58D391E4-%s/json\"\r\n",IMEI);
-		#else
+		#if (USR_PLAM_TYPE == 0)
+		sprintf(pDst, "AT+SMUNSUB=\"/oneM2M/req/CSE1000/C333D8962-%s/json\"\r\n",IMEI);
+		#elif (USR_PLAM_TYPE == 1)
 		sprintf(pDst, "AT+SMUNSUB=\"/oneM2M/req/CSE1000/CDA68B264-%s/json\"\r\n",IMEI);
+		#else
+		sprintf(pDst, "AT+SMUNSUB=\"/oneM2M/req/CSE1000/C58D391E4-%s/json\"\r\n",IMEI);
 		#endif
 		break;
 	case AT_SMDISC:								//断开MQTT连接
@@ -472,14 +486,17 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 	case AT_CCID:
 		if ((p1 = strstr(pSrc, "OK")) != NULL)
 		{
-			Flag.HaveGetCCID = 1;
-			Test.GetGsmCCID = 1;
-
 			p1 = strstr(pSrc, "\r\n");
-
-			memset(CCID, '\0', 21);
 			p1 += 2;
-			strncpy(CCID, p1, 20);		
+			ptem = strstr(p1, "\r\n");
+			if((ptem - p1 < 30) && (ptem - p1 > 10))
+			{
+				memset(CCID, '\0', 30);
+				strncpy(CCID, p1, ptem - p1);	
+
+				Flag.HaveGetCCID = 1;
+				Test.GetGsmCCID = 1;
+			}
 		}
 
 		back = 1;
@@ -1166,6 +1183,7 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 		if (strstr(pSrc, "+CBC:"))
 		{
 			static u8 low_bat_times = 0;
+			static u8 varylow_bat_times = 0;
 
 			*temType = AT_NULL;
 
@@ -1183,11 +1201,21 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 				{
 					Flag.BattLow = 1;
 				}
-			}			
+
+				if(strcmp(BatValue, "3200") < 0)	
+				{
+					varylow_bat_times ++;
+					if(varylow_bat_times > 5)
+					{
+						Flag.NeedShutDown = 1;
+					}
+				}
+			}	
 			else if((Flag.BattLow)&&(strcmp(BatValue, "3650") > 0))
 			{
 				AT_CBC_IntervalTemp = 20;
 				low_bat_times = 0;
+				varylow_bat_times = 0;
 				Flag.BattLow = 0;
 			}			
 			back = 1;

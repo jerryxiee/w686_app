@@ -10,7 +10,7 @@ unsigned int ActiveTimer;
 char UserIDBuf[16];
 char GprsSendBuf[DATABUFLEN];
 char UpgradeSendBuf[UPDRADELEN];
-char CCID[21];
+char CCID[30];
 char AtSendbuf[SCIBUFLEN]; /*定义一个数组存储发送数据*/
 char GprsContent[GPRSCONTLEN];
 char IMEI[16];
@@ -333,7 +333,7 @@ u16 Mqtt_SendPacket(GPRS_TYPE switch_tmp)
 		strcat(GprsContent, Temp);
 
 		strcat(GprsContent, "a8:"); //固件版本
-		sprintf(Temp, "\"%s\"", Edition);
+		sprintf(Temp, "\"%s\"", Edition_STD);
 		strcat(GprsContent, Temp);
 
 		sprintf(GprsSendBuf,
@@ -454,6 +454,7 @@ void GPRS_Send_Handle(void)
 		return;
 	}
 
+#if 0								//暂时先关闭结果上报
 	if(Flag.NeedSendUpgResult)
 	{
 		AtType = AT_SMPUB;
@@ -461,6 +462,7 @@ void GPRS_Send_Handle(void)
 		Flag.NeedSendUpgResult = 0;	
 		return;	
 	}
+#endif
 
 	if(Flag.NeedSendResponse)
 	{
@@ -629,7 +631,7 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 				{
 					printf("c18 data format error!\r\n");
 					UpgInfo.UpgrateFail = 1;
-					strcpy(FsUpg.HttpError,"Illegal file name!");
+					strcpy(FsUpg.HttpError,"Command error!");
 					return;					
 				}
 
@@ -669,7 +671,8 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 
 				//设置升级服务器域名和端口
 				memset(FsUpg.AppIpAdress,0,sizeof(FsUpg.AppIpAdress));
-				strcpy(FsUpg.AppIpAdress,"http://stg-fota.mamosearch.com:80");
+//				strcpy(FsUpg.AppIpAdress,"http://stg-fota.mamosearch.com:80");
+				strcpy(FsUpg.AppIpAdress," http://fota.mamoair.net:80");
 
 				MD5Init(&Upgmd5);  					//初始化MD5
 
@@ -681,13 +684,13 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 					UpgInfo.RetryCnt = 2;				//升级失败重复次数
 
 					printf("Need upgrade the device,upgrade file name is: %s\r\n",FsUpg.AppFilePath);
-					sprintf(RespServiceBuf,"Fota file name is :%s,ready upgrade...",FsUpg.AppFilePath);
+					strcpy(RespServiceBuf,gprs_content);
 				}
 				else if(fota_type == '1')
 				{
 					Flag.NeedSendResponse = 1;
 					UpgInfo.NeedWaitUpgrade = 1;
-					sprintf(RespServiceBuf,"Fota file name is :%s,wait to upgrade...",FsUpg.AppFilePath);
+					strcpy(RespServiceBuf,gprs_content);
 				}
 				
 
@@ -893,6 +896,13 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 					printf("\r\nc27 data format incorrect!\r\n");
 					Flag.NeedSendResponse = 0;		//数据格式错误不回复
 				}
+			}
+
+			//设置APN,Usr name,password
+			//c28:device2.iotpf.mb.softbank.jp,8883
+			else if(p0 == strstr(p0,"c28:"))
+			{
+				p0 += 4;
 			}
 		}
 		else

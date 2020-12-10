@@ -29,6 +29,7 @@ typedef struct{
 	unsigned char 	NeedUpdata:1;				//开始远程升级
 	unsigned char 	NeedDiscontHttp:1;			//需要断开HTTP连接
 	unsigned char 	NeedWaitUpgrade:1;			//需要等到指定时间后开始升级
+	unsigned char 	HaveGetRankData:1;			//已经获取到了随机升级倒计时数
 
 	unsigned char 	AppDownloadOk;		//文件已经成功下载完成
 	unsigned short 	UpgPacketNums;

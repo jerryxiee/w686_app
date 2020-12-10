@@ -129,7 +129,7 @@ void Usr_ModuleTurnOn(void)
 	Flag.NeedWakeMdByAt = 1;
 	Flag.RcvAtAckOK = 0;
 	Flag.HaveSmsReady = 0;
-	Flag.HaveGetCCID = 1;
+	Flag.HaveGetCCID = 0;
 	Flag.PwrOnModule = 1;
 	Flag.NeedSetNtp = 1;
 

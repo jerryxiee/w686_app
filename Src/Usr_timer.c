@@ -15,6 +15,8 @@ unsigned char WaitRestart;					//等待一段时间后重启，用于某些时�
 unsigned char ConnectGprsCnt;				//连接到服务器计时，用于连接服务器15秒后关闭网络led灯
 unsigned char AT_CBC_IntervalTemp; 			//电池电量采样间隔
 unsigned char FactoryCnt;					//恢复出厂设置按键按下计数器
+unsigned short Start_Fota_Rang;				//产生一个3x60x60即0-10800范围内的随机数，用于设备错峰升级
+unsigned short System_Rang_Data;			//系统周期性生成随机数
 
 const unsigned char arr_nDays[12] = 	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 const unsigned char Leap_month_day[12]=	{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}; //闰年 
@@ -133,6 +135,7 @@ void TIMER_SecCntHandle(void)
 		}
 	}
 
+
 	if(Test.WaitEnterTest > 0)
 	{
 		Test.WaitEnterTest --;
@@ -151,6 +154,11 @@ void TIMER_SecCntHandle(void)
 		}
 	}
 
+	if(Start_Fota_Rang > 0)
+	{
+		Start_Fota_Rang --;
+	}
+
 	if((Flag.GprsConnectOk) && (ConnectGprsCnt < 15))
 	{
 		ConnectGprsCnt ++;
@@ -160,9 +168,19 @@ void TIMER_SecCntHandle(void)
 		ConnectGprsCnt = 0;
 	}
 
+	if(baseTimeSec % 2 == 0)
+	{
+		Flag.NeedGetRangData = 1;
+	}
+
 	if((baseTimeSec % 15 == 0) && (Flag.BattLow == 1))
 	{
 		Flag.LowBatLed = 1;
+	}
+
+	if(baseTimeSec % 15 == 5)
+	{
+		Flag.NetConnectLed = 1;
 	}
 
 	if((baseTimeSec % 5 == 0) && (Flag.Co2SensorError || Flag.SHT3xSensorError))
@@ -214,7 +232,7 @@ void TIMER_SecCntHandle(void)
 		Flag.NeedCheckCCS811Value = 1;
 
 		//如果没有检测到传感器，尝试重新检测
-		if(sensor_type == 0)
+		if((sensor_type == 0)||(sensor_type == 0xFE))
 		{
 			Flag.NeedCheckCO2Sensor = 1;
 			//重新查询传感器类型需要重新设置这两个变量
@@ -405,7 +423,11 @@ void TIMER_BaseCntHandle(void)
 	{
 		Test.WaitTestCnt --;
 	}
-	if((Test.TestStep != 0xFF) && (Test.TestOver == 0) && (Test.ShowResultCnt == 0))
+
+	// Flag.NeedGetFloodSensor = 1;
+	// return;
+
+	if((Test.TestStep != 0xFF) && (Test.TestStep != 0) && (Test.TestOver == 0) && (Test.ShowResultCnt == 0))
 	{
 		LED_NET_RED_ON;
 		LED_NET_GREEN_ON;
@@ -423,22 +445,22 @@ void TIMER_BaseCntHandle(void)
 		return;
 	}
 
-	//sensor灯逻辑
+	//sensor灯逻辑,原本定义故障后，闪红灯，后来删除该功能
 	if(Flag.Co2SensorError || Flag.SHT3xSensorError)
 	{
-		if(Flag.SensorErrorLed)
-		{
-			Flag.SensorErrorLed = 0;
-			LED_SENSOR_RED_ON;
-			LED_SENSOR_GREEN_OFF;
-			LED_SENSOR_BLUE_OFF;
-		}
-		else
-		{
-			LED_SENSOR_RED_OFF;
-			LED_SENSOR_GREEN_OFF;
-			LED_SENSOR_BLUE_OFF;		
-		}
+		// if(Flag.SensorErrorLed)
+		// {
+		// 	Flag.SensorErrorLed = 0;
+		// 	LED_SENSOR_RED_OFF;
+		// 	LED_SENSOR_GREEN_ON;
+		// 	LED_SENSOR_BLUE_OFF;
+		// }
+		// else
+		// {
+		// 	LED_SENSOR_RED_OFF;
+		// 	LED_SENSOR_GREEN_ON;
+		// 	LED_SENSOR_BLUE_OFF;		
+		// }
 
 	}
 	else if (co2_module_value > Fs.Co2AlarmThreshold)
@@ -449,9 +471,9 @@ void TIMER_BaseCntHandle(void)
 	}
 	else if (co2_module_value > Fs.Co2WarnThreshold)
 	{
-		LED_SENSOR_RED_OFF;
+		LED_SENSOR_RED_ON;
 		LED_SENSOR_GREEN_ON;
-		LED_SENSOR_BLUE_ON;
+		LED_SENSOR_BLUE_OFF;
 	}
 	else if (co2_module_value <= Fs.Co2WarnThreshold)
 	{
@@ -507,9 +529,6 @@ void TIMER_BaseCntHandle(void)
 		switch (ledCnt)
 		{
 		case 0:
-			if(ConnectGprsCnt >= 15)
-			break;
-
 			if(Flag.PsSignalOk == 0)
 			{
 				LED_NET_RED_ON;
@@ -522,8 +541,10 @@ void TIMER_BaseCntHandle(void)
 				LED_NET_GREEN_ON;
 				LED_NET_BLUE_ON;			
 			}
-			else if(Flag.GprsConnectOk)
+			else if(Flag.GprsConnectOk && Flag.NetConnectLed) 
 			{
+				Flag.NetConnectLed = 0;
+				
 				LED_NET_RED_OFF;
 				LED_NET_GREEN_ON;
 				LED_NET_BLUE_ON;			
