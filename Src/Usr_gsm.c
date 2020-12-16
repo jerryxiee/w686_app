@@ -378,9 +378,12 @@ void Usr_Device_ShutDown(void)
 	Usr_ModuleTurnOff();				//关模块
 	GPIO_Init_Before_Shutdown();		//设置GPIO状态
 
+//	stop_1:
 	LL_PWR_SetPowerMode(LL_PWR_MODE_STOP1);
 	LL_LPM_EnableDeepSleep();			//进入停止模式
 	__WFI();
+
+//	goto stop_1;
 	NVIC_SystemReset();					//外部充电中断唤醒后直接重启
 }
 

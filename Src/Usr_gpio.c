@@ -344,7 +344,8 @@ void GPIO_Init_Before_Shutdown(void)
     LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     //二氧化碳传感器供电使能脚，PC4；模块供电维持，PC7；
-    GPIO_InitStruct.Pin = (~(LL_GPIO_PIN_4|LL_GPIO_PIN_7));
+  //  GPIO_InitStruct.Pin = (~(LL_GPIO_PIN_4|LL_GPIO_PIN_7));       //低功耗时使用该条
+    GPIO_InitStruct.Pin = LL_GPIO_PIN_ALL;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
     LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
@@ -355,6 +356,7 @@ void GPIO_Init_Before_Shutdown(void)
     LL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
     //外部充电检测配置为中断
+    #if 1
     LL_EXTI_SetEXTISource(LL_EXTI_CONFIG_PORTB, LL_EXTI_CONFIG_LINE15);
 
     EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_15;
@@ -367,6 +369,7 @@ void GPIO_Init_Before_Shutdown(void)
     LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_15, LL_GPIO_MODE_INPUT);
     NVIC_SetPriority(EXTI4_15_IRQn, 2);
     NVIC_EnableIRQ(EXTI4_15_IRQn);
+    #endif
 }
 
 

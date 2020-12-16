@@ -141,7 +141,7 @@ void AT_SendPacket(AT_TYPE temType, char *pDst)
 		break;
 	case AT_SMCONF_URL:								//设置MQTT服务器地址和端口
 		#if (USR_PLAM_TYPE == 0)
-		sprintf(pDst, "AT+SMCONF=\"URL\",\"221.110.245.99\",%s\r\n",Fs.IpPort);	
+		sprintf(pDst, "AT+SMCONF=\"URL\",\"device2.iotpf.mb.softbank.jp\",%s\r\n",Fs.IpPort);	
 		#elif (USR_PLAM_TYPE == 1)
 		sprintf(pDst, "AT+SMCONF=\"URL\",\"device2.iotpf.mb.softbank.jp\",%s\r\n",Fs.IpPort);	
 		#else
@@ -1167,7 +1167,7 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 				low_bat_times ++;
 				if(low_bat_times > 5)
 				{
-					Flag.BattLow = 1;
+	//				Flag.BattLow = 1;
 				}
 
 				if(strcmp(BatValue, "3200") < 0)	
@@ -1184,7 +1184,7 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 				AT_CBC_IntervalTemp = 20;
 				low_bat_times = 0;
 				varylow_bat_times = 0;
-				Flag.BattLow = 0;
+	//			Flag.BattLow = 0;
 			}			
 			back = 1;
 		}

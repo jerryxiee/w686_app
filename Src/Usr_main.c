@@ -17,7 +17,7 @@ unsigned char CheckModeCnt;		//模块开机后，等待主动上报内容，超�
 const unsigned char SoftwareBuilt[50] = {0};
 char Edition[50] = {0};
 
-char Edition_STD[50] = {"W686IB_V0.0.1_T02"};				//程序的稳定版本，手动设置版本型号
+char Edition_STD[50] = {"W686IB_V0.0.1_T05"};				//程序的稳定版本，手动设置版本型号
 char HardWare_Edition[50] = {"TY197_MAIN_V2.0"};		//硬件版本，手动设置版本型号
 
 u8 Built_year[5] = {'\0'};
@@ -174,7 +174,7 @@ void Usr_InitValue(void)
 	memset(UserIDBuf,0, sizeof(UserIDBuf));
 	strncpy(UserIDBuf,Fs.UserID, sizeof(UserIDBuf)); 
 
-	RTC_Wake_Init(300);		//五分钟产生一次闹钟事件
+//	RTC_Wake_Init(300);		//五分钟产生一次闹钟事件
 }
 
 void Flag_Check(void)
@@ -192,18 +192,55 @@ void Flag_Check(void)
 
 	if(Flag.NeedGetBatVoltage)
 	{
+		static u8 lowbatcnt = 0;
+		static u8 lowbatalarmcnt = 0;
+
 		//实测电单片机电压为电池电压-0.3V，ADC采样必须要求单片机供电正常。所以电池电压小于3.6V时采样开始不准
 		//实测电池电压小于3.6V以下时，电池电压采样一直为3.65V左右，所以该ADC采样不适用3.65V以下
+
+		//由于锂电池和干电池电路回路不通，锂电池需要将采样值x2.9 + 200，然后在小于3.8v时，需要向下修正40
+		//
 		Flag.NeedGetBatVoltage = 0;
 		BatVoltage_Adc = (u32)Adc_Value_Get();
 		//转换成电池电压,470k和270k分压，采样值*（7.4/0.27）=采样值*2.74,修正到2.8；外加0.2v的二极管分压
-		BatVoltage_Adc = (BatVoltage_Adc * 290/100) + 200;		
-		if(BatVoltage_Adc > 3650)
+	//	BatVoltage_Adc = (BatVoltage_Adc * 290/100) + 100;	
+		BatVoltage_Adc = (BatVoltage_Adc * 350/100) - 600;	
+		if(BatVoltage_Adc < 3900)
+		{
+			BatVoltage_Adc -= 40;			//电池电压低时，采样会偏大，这里修正0.04v
+		}
+
+		if(BatVoltage_Adc <= 3800)
+		{
+			lowbatalarmcnt ++;
+			if(lowbatalarmcnt > 10)
+			{
+				Flag.BattLow = 1;
+			}
+		}
+		else if(BatVoltage_Adc > 3830)
+		{
+			lowbatalarmcnt = 0;
+			Flag.BattLow = 0;
+		}
+
+		if(BatVoltage_Adc > 3670)
 		{
 			printf("The battery voltage is %d mv\r\n",BatVoltage_Adc);
+			if(BatVoltage_Adc > 3750)
+			{
+				lowbatcnt = 0;
+			}
 		}		
 		else
 		{
+			lowbatcnt ++;
+			if(lowbatcnt > 5)
+			{
+				lowbatcnt = 0;
+				Flag.NeedShutDown = 1;
+				printf("The battery voltage less then 3650 mv over 5 times,ready shut down!\r\n");
+			}
 			printf("The battery voltage less then 3650 mv\r\n");
 		}
 	}

@@ -1,11 +1,8 @@
 #include "usr_main.h"
 
-char Get0_result[10];
-char Get2_result[10];
-char Get3_result[10];
-char GetALL_result[100];
-
 TEST Test;
+TEST_RESULT Test_Result;
+TEST_RESULT Test_Result_Read;
 
 void Test_Init(void)
 {
@@ -14,6 +11,23 @@ void Test_Init(void)
     UART_Send(USART3,"Device can enter Test mode by send Test command in 10s\r\n",56);
 }
 
+u8 Updata_TestResult(void)
+{
+    memset(&Test_Result_Read,0,sizeof(Test_Result_Read));
+
+    EXFLASH_EraseSector(TESTRESULTADDR_0);
+    EXFLASH_WriteBuffer((u8 *) &Test_Result,TESTRESULTADDR_0,sizeof(Test_Result));
+    EXFLASH_ReadBuffer((u8 *) &Test_Result_Read,TESTRESULTADDR_0,sizeof(Test_Result_Read));
+
+    if(memcmp(&Test_Result,&Test_Result_Read,sizeof(Test_Result)) == 0)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
 
 void Test_Receive(void)
 {   
@@ -27,6 +41,8 @@ void Test_Receive(void)
 	{
 		Test.TestStep = 0;
         Test.InTesting = 1;
+        memset(&Test_Result,0,sizeof(Test_Result));
+        EXFLASH_ReadBuffer((u8 *)&Test_Result,TESTRESULTADDR_0,sizeof(Test_Result));
 	}
 
     //外部IMEI设置：AT^SETIMEI=123456789012345\r\n
@@ -51,11 +67,11 @@ void Test_Receive(void)
         {
             p1 = strstr(temp_buf, "#");
             *p1 = 0;                                             //删除“#”
-            memset(GetALL_result,0,sizeof(GetALL_result));
-            EXFLASH_ReadBuffer((u8 *)GetALL_result,TESTRESULTADDR_4,sizeof(GetALL_result));
-            p1 = strstr(GetALL_result, "\r\n");
+            memset(Test_Result.GetAll,0,sizeof(Test_Result.GetAll));
+            EXFLASH_ReadBuffer((u8 *)&Test_Result,TESTRESULTADDR_0,sizeof(Test_Result));
+            p1 = strstr(Test_Result.GetAll, "\r\n");
             *p1 = 0; 
-            sprintf(send_buf,"^DEV@SETIMEI=%s;%s\r\n",temp_buf,GetALL_result);
+            sprintf(send_buf,"^DEV@SETIMEI=%s;%s\r\n",temp_buf,Test_Result.GetAll);
             UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));        
         }   
         else
@@ -74,20 +90,14 @@ void Test_Receive(void)
         p0 = strstr(Uart3Buf, "AT^SET0=");
         p0 += 8;
         p1 = strstr(p0, "\r\n");
-        if(p1 - p0 < sizeof(temp_buf))
+        if(p1 - p0 < sizeof(Test_Result.Get0))
         {
-            strncpy(temp_buf,p0,p1 - p0);
-            strcat(temp_buf,"#");                   //添加一个#作为结束符
-            EXFLASH_EraseSector(TESTRESULTADDR_0);
-            EXFLASH_WriteBuffer((u8 *)temp_buf,TESTRESULTADDR_0,strlen(temp_buf));
-            EXFLASH_ReadBuffer((u8 *)read_buf,TESTRESULTADDR_0,strlen(temp_buf));
-            
-            if(memcmp(temp_buf,read_buf,strlen(temp_buf)) == 0)
+            memset(Test_Result.Get0,0,sizeof(Test_Result.Get0));
+            strncpy(Test_Result.Get0,p0,p1 - p0);
+            if( Updata_TestResult() )
             {
-                p1 = strstr(temp_buf, "#");
-                *p1 = 0;
-                sprintf(send_buf,"^DEV@SET0=%s\r\n",temp_buf);
-                UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));        //长度减1是去掉“#”
+                sprintf(send_buf,"^DEV@SET0=%s\r\n",Test_Result.Get0);
+                UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));              
             }
         }
     }
@@ -96,16 +106,19 @@ void Test_Receive(void)
         p0 = strstr(Uart3Buf, "AT^SET1=");
         p0 += 8;
         p1 = strstr(p0, "\r\n");
-        if(p1 - p0 < sizeof(temp_buf))
+        if(p1 - p0 < sizeof(Test_Result.Get1))
         {
-            strncpy(temp_buf,p0,p1 - p0);
-            sprintf(send_buf,"^DEV@SET1=%s\r\n",temp_buf);
-            UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));     
+            memset(Test_Result.Get1,0,sizeof(Test_Result.Get1));
+            memset(Test_Result.GetAll,0,sizeof(Test_Result.GetAll));
+            strncpy(Test_Result.Get1,p0,p1 - p0);
+            sprintf(Test_Result.GetAll,"IMEI=%s;ATI=%s;CCID=%s;GET0=%s;GET2=%s;GET3=%s;SW=%s;\r\n",IMEI_MODULE,GsmRev,CCID,Test_Result.Get0,Test_Result.Get2,Test_Result.Get3,Edition_STD);
+            if( Updata_TestResult() )
+            {
+                sprintf(send_buf,"^DEV@SET1=%s\r\n",Test_Result.Get1);
+                UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));              
+            }
         }
 
-        memset(GetALL_result,0,sizeof(GetALL_result));
-        sprintf(GetALL_result,"IMEI=%s;ATI=%s;CCID=%s;GET0=%s;GET2=%s;GET3=%s;\r\n",IMEI_MODULE,GsmRev,CCID,Get0_result,Get2_result,Get3_result);
-        EXFLASH_WriteBuffer((u8 *)GetALL_result,TESTRESULTADDR_4,strlen(GetALL_result));
         //测试完成，清除LED测试模式
         Clear_Leds();	
 
@@ -128,19 +141,14 @@ void Test_Receive(void)
         p0 = strstr(Uart3Buf, "AT^SET2=");
         p0 += 8;
         p1 = strstr(p0, "\r\n");
-        if(p1 - p0 < sizeof(temp_buf))
+        if(p1 - p0 < sizeof(Test_Result.Get2))
         {
-            strncpy(temp_buf,p0,p1 - p0);
-            strcat(temp_buf,"#"); 
-            EXFLASH_WriteBuffer((u8 *)temp_buf,TESTRESULTADDR_2,strlen(temp_buf));
-            EXFLASH_ReadBuffer((u8 *)read_buf,TESTRESULTADDR_2,strlen(temp_buf));
-            
-            if(memcmp(temp_buf,read_buf,strlen(temp_buf)) == 0)
+            memset(Test_Result.Get2,0,sizeof(Test_Result.Get2));
+            strncpy(Test_Result.Get2,p0,p1 - p0);
+            if( Updata_TestResult() )
             {
-                p1 = strstr(temp_buf, "#");
-                *p1 = 0;
-                sprintf(send_buf,"^DEV@SET2=%s\r\n",temp_buf);
-                UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
+                sprintf(send_buf,"^DEV@SET2=%s\r\n",Test_Result.Get2);
+                UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));              
             }
         }
     }
@@ -149,55 +157,35 @@ void Test_Receive(void)
         p0 = strstr(Uart3Buf, "AT^SET3=");
         p0 += 8;
         p1 = strstr(p0, "\r\n");
-        if(p1 - p0 < sizeof(temp_buf))
+        if(p1 - p0 < sizeof(Test_Result.Get3))
         {
-            strncpy(temp_buf,p0,p1 - p0);
-            strcat(temp_buf,"#"); 
-            EXFLASH_WriteBuffer((u8 *)temp_buf,TESTRESULTADDR_3,strlen(temp_buf));
-            EXFLASH_ReadBuffer((u8 *)read_buf,TESTRESULTADDR_3,strlen(temp_buf));
-            
-            if(memcmp(temp_buf,read_buf,strlen(temp_buf)) == 0)
+            memset(Test_Result.Get3,0,sizeof(Test_Result.Get3));
+            strncpy(Test_Result.Get3,p0,p1 - p0);
+            if( Updata_TestResult() )
             {
-                p1 = strstr(temp_buf, "#");
-                *p1 = 0;
-                sprintf(send_buf,"^DEV@SET3=%s\r\n",temp_buf);
-                UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
+                sprintf(send_buf,"^DEV@SET3=%s\r\n",Test_Result.Get3);
+                UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));              
             }
         }
     }
     else if(strstr(Uart3Buf, "AT^GET0="))
     {
-        memset(Get0_result,0,sizeof(Get0_result));
-        EXFLASH_ReadBuffer((u8 *)Get0_result,TESTRESULTADDR_0,sizeof(Get0_result));
-        p0 = strstr(Get0_result,"#");
-        *p0 = 0;
-        sprintf(send_buf,"^DEV@GET0=%s\r\n",Get0_result);
+        sprintf(send_buf,"^DEV@GET0=%s\r\n",Test_Result.Get0);
         UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
     }
     else if(strstr(Uart3Buf, "AT^GET1="))
     {
-        EXFLASH_ReadBuffer((u8 *)read_buf,TESTRESULTADDR_1,sizeof(read_buf));
-        p0 = strstr(read_buf,"#");
-        *p0 = 0;
         sprintf(send_buf,"^DEV@GET1=%s\r\n",read_buf);
         UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
     }
     else if(strstr(Uart3Buf, "AT^GET2="))
     {
-        memset(Get2_result,0,sizeof(Get2_result));
-        EXFLASH_ReadBuffer((u8 *)Get2_result,TESTRESULTADDR_2,sizeof(Get2_result));
-        p0 = strstr(Get2_result,"#");
-        *p0 = 0;
-        sprintf(send_buf,"^DEV@GET2=%s\r\n",Get2_result);
+        sprintf(send_buf,"^DEV@GET2=%s\r\n",Test_Result.Get2);
         UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
     }
     else if(strstr(Uart3Buf, "AT^GET3="))
     {
-        memset(Get3_result,0,sizeof(Get3_result));
-        EXFLASH_ReadBuffer((u8 *)Get3_result,TESTRESULTADDR_3,sizeof(Get3_result));
-        p0 = strstr(Get3_result,"#");
-        *p0 = 0;
-        sprintf(send_buf,"^DEV@GET3=%s\r\n",Get3_result);
+        sprintf(send_buf,"^DEV@GET3=%s\r\n",Test_Result.Get3);
         UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));
     }
 

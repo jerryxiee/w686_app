@@ -36,6 +36,17 @@ typedef struct{
 }TEST;
 #endif
 
+#ifndef _TEST_RESULT_
+#define _TEST_RESULT_
+typedef struct{
+    char Get0[10];
+    char Get1[10];
+    char Get2[10];
+    char Get3[10];
+    char GetAll[200];
+}TEST_RESULT;
+#endif
+
 extern TEST Test;
 
 void Test_Init(void);

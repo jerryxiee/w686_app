@@ -173,7 +173,7 @@ void TIMER_SecCntHandle(void)
 		Flag.NeedGetRangData = 1;
 	}
 
-	if((baseTimeSec % 15 == 0) && (Flag.BattLow == 1))
+	if((baseTimeSec % 15 == 0) && (Flag.BattLow == 1) && !Flag.InCharging)
 	{
 		Flag.LowBatLed = 1;
 	}
