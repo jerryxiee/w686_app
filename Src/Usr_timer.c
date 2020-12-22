@@ -225,6 +225,12 @@ void TIMER_SecCntHandle(void)
 
 	baseSecCnt ++;
 
+	//每隔12个小时上传一包登入包
+	if(baseSecCnt % (12 * 3600) == 0)
+	{
+		Flag.NeedLogIn = 1;
+	}
+
 	if (baseSecCnt % Fs.SensorCkInterval == 0)			//在数据上传前提前一点时间检查传感器数据
 	{
 		Flag.NeedCheckCO2Value = 1;

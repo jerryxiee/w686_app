@@ -83,7 +83,8 @@ void Usr_ModuleWakeUp(void)
 	Flag.NeedSendToSleep = 1;
 
 	//有的时候发送的第一条指令不回复，需要先重复发送几个AT
-	AtType = AT_AT;
+//	AtType = AT_AT;
+	AtType = AT_CPIN;
 	while(at_retry)
 	{
 		AT_SendPacket(AtType, AtSendbuf);
@@ -107,7 +108,7 @@ void GsmOn_Timer_Init(void)
 
 void Usr_ModuleTurnOn(void)
 {
-	unsigned char i = 3;
+//	unsigned char i = 3;
 	static u8 NeedInitGsm = 1;
 
 	if (!Flag.NeedModuleOn)

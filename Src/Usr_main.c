@@ -17,7 +17,7 @@ unsigned char CheckModeCnt;		//模块开机后，等待主动上报内容，超�
 const unsigned char SoftwareBuilt[50] = {0};
 char Edition[50] = {0};
 
-char Edition_STD[50] = {"W686IB_V0.0.1_T05"};				//程序的稳定版本，手动设置版本型号
+char Edition_STD[50] = {"W686IB_V0.0.1_T09"};				//程序的稳定版本，手动设置版本型号
 char HardWare_Edition[50] = {"TY197_MAIN_V2.0"};		//硬件版本，手动设置版本型号
 
 u8 Built_year[5] = {'\0'};
@@ -215,7 +215,9 @@ void Flag_Check(void)
 			lowbatalarmcnt ++;
 			if(lowbatalarmcnt > 10)
 			{
+				#if(USR_CBC_CHECK_VOL == 0)
 				Flag.BattLow = 1;
+				#endif
 			}
 		}
 		else if(BatVoltage_Adc > 3830)
@@ -235,11 +237,13 @@ void Flag_Check(void)
 		else
 		{
 			lowbatcnt ++;
-			if(lowbatcnt > 5)
+			if(lowbatcnt > 10)
 			{
 				lowbatcnt = 0;
+				#if(USR_CBC_CHECK_VOL == 0)
 				Flag.NeedShutDown = 1;
-				printf("The battery voltage less then 3650 mv over 5 times,ready shut down!\r\n");
+				printf("The battery voltage less then 3650 mv over 10 times,ready shut down!\r\n");
+				#endif
 			}
 			printf("The battery voltage less then 3650 mv\r\n");
 		}

@@ -1167,24 +1167,33 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 				low_bat_times ++;
 				if(low_bat_times > 5)
 				{
-	//				Flag.BattLow = 1;
+					#if USR_CBC_CHECK_VOL
+					Flag.BattLow = 1;
+					#endif
 				}
 
 				if(strcmp(BatValue, "3200") < 0)	
 				{
+					Flag.BattLow = 1;				//如果电压小于3.45，直接告警电池电压低
+
 					varylow_bat_times ++;
-					if(varylow_bat_times > 5)
+					if(varylow_bat_times > 10)
 					{
 						Flag.NeedShutDown = 1;
 					}
 				}
-			}	
+			}
+			else if((strcmp(BatValue, "3350") > 0))
+			{
+				varylow_bat_times = 0;
+			}		
 			else if((Flag.BattLow)&&(strcmp(BatValue, "3650") > 0))
 			{
 				AT_CBC_IntervalTemp = 20;
 				low_bat_times = 0;
-				varylow_bat_times = 0;
-	//			Flag.BattLow = 0;
+				#if USR_CBC_CHECK_VOL
+				Flag.BattLow = 0;
+				#endif 
 			}			
 			back = 1;
 		}

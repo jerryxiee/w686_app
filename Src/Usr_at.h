@@ -45,6 +45,8 @@ typedef struct{
 #define MODUAL_INFO_ERROR		4		//开机后无法应答AT指令，开机不成功
 #define MODUAL_NOACK			5		//模块超过三次无应答
 
+#define USR_CBC_CHECK_VOL		1		//使用模块CBC指令换算成电池电压
+
 extern AT_TYPE  AtType;
 extern AT_ERROR AtError;
 

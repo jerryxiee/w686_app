@@ -16,7 +16,7 @@ unsigned short Uart4Index;			//串口4串口数据buf接收到的位置
 unsigned char Uart4RecCnt;			//串口4数据接收到计时，用来判断串口数据已经接收完全
 char Uart4Buf[UART4_BUF_LEN]; 
 
-u8 At_test_buf[6] = {"AT\r\n"};
+u8 At_test_buf[11] = {"AT+CPIN?\r\n"};
 
 //----------------------printf功能实现------------------------------//
 
