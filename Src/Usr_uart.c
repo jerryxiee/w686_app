@@ -86,8 +86,18 @@ void UART_DebugInit(void)
 	memset(Uart3Buf,0,sizeof(Uart3Buf));	
 }
  
-void BLE_Receive(void)
+void BT_Receive(void)
 {
+	BtDfu_Info.WaitBtAck = 0;
+	if(BtDfu_Info.InDfu)
+	{
+		BT_Dfu_Receive(&BtType,Uart4Buf);
+	}
+	else
+	{
+		BT_Data_Receive(Uart4Buf);
+	}
+	
 	
 }
 
@@ -287,7 +297,7 @@ void UART_Handle(void)
 
 	if (Flag.Uart4HaveData && !Uart4RecCnt)
 	{
-		BLE_Receive();
+		BT_Receive();
 		UART_BleInit();
 	}
 
@@ -513,12 +523,29 @@ void Usr_USART4_UART_Init(void)
 }
 
 
+void Usr_USART4_UART_DeInit(void)
+{
+//	LL_USART_InitTypeDef USART_InitStruct = {0};
+	LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+	LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_USART4);
+	LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA);
+
+	LL_USART_DeInit(USART4);
+
+	GPIO_InitStruct.Pin = LL_GPIO_PIN_0|LL_GPIO_PIN_1;
+	GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
+	LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+}
+
+
+
 void UART_Init(void)
 {
 	Usr_USART1_UART_Init();
     Usr_USART2_UART_Init();
     Usr_USART3_UART_Init();
-    Usr_USART4_UART_Init();
+ //   Usr_USART4_UART_Init();
 	
 	UART_AtInit();
 	UART_CO2Init();

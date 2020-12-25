@@ -7,7 +7,9 @@
 #define BREAK_PIONT_ADDR_0		0x00000000      //断点保存起始地址
 #define BREAK_PIONT_ADDR_1		0x00010000      //断点保存起始地址
 #define EXFLASH_APP1_ADDR		0x00100000      //远程升级文件存放的起始地址，共分配3个扇区，3x64k
-#define IMEIADDR                0x00200000      //设置的IMEI存放地址
+#define EXFLASH_BTAPP_ADDR		0x00101000      //蓝牙DFU升级文件存放的起始地址，共分配3个扇区，3x64k
+#define IMEIADDR                0x00200000      //设置的IMEI存放地址，存放在2M处位置
+
 
 #define FLASH_UPG_ADDR	        0x00080000      //远程升级结果存放地址
 #define FLASH_FS_ADDR	        0x001f0000

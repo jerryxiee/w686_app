@@ -86,8 +86,7 @@ void Ascii2BCD(char *pSrc, unsigned char *pDst)
 		f = 1;
 		if (pSrc[i] >= '0' && pSrc[i] <= '9')
 			temp = pSrc[i] - 0x30;
-		//		else if(pSrc[i]>='a' && pSrc[i]<='f') 	temp=pSrc[i]-0x57;
-		//		else if(pSrc[i]>='A' && pSrc[i]<='F') 	temp=pSrc[i]-0x37;
+
 		else
 			f = 0;
 
@@ -409,7 +408,7 @@ u16 Mqtt_SendPacket(GPRS_TYPE switch_tmp)
 
 		case RESPONSE:
 		sprintf(GprsSendBuf,
-				"{\"to\":\"IoT/imei:%s/default\",\"op\":1,\"pc\":{\"m2m:cin\":{\"con\":\"%s\"}},\
+				"{\"to\":\"IoT/imei:%s/default\",\"op\":1,\"pc\":{\"m2m:cin\":{\"con\":\"{%s}\"}},\
 \"fr\":\"IoT/imei:%s\",\"rqi\":\"imei:%s_20200623185648_001\",\"ty\":4,\"rt\":2}",
 				IMEI, RespServiceBuf, IMEI, IMEI);	
 		break;
@@ -575,21 +574,23 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 			strncpy(gprs_content, p0, p1 - p0 - 1);
 			printf("\r\nRecvice the data form service: %s\r\n",gprs_content);
 
+
 			//重启和关机命令
-			if(p0 == strstr(p0,"c8:"))
+			if((p0 = strstr(gprs_content,"c8")) != NULL)
 			{
-				p0 += 3;
+				p0 = strstr(p0,":");
+				p0 ++;
 				if(*p0 == '1')			
 				{
 					Flag.NeedDeviceRst = 1;
 					Flag.NeedResponseFrist = 1;	
-					strcpy(RespServiceBuf,"c8:1");
+					strcpy(RespServiceBuf,"\\\"c8\\\":1");
 				}
 				else if(*p0 == '0')
 				{
 					Flag.NeedShutDown = 1;	
 					Flag.NeedResponseFrist = 1;		
-					strcpy(RespServiceBuf,"c8:0");		
+					strcpy(RespServiceBuf,"\\\"c8\\\":0");		
 				}
 				else
 				{
@@ -600,20 +601,22 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 			}
 
 			//设置FOTA升级允许
-			else if(p0 == strstr(p0,"c17:"))
+			else if((p0 = strstr(gprs_content,"c17")) != NULL)
 			{
-				p0 += 4;
+				p0 = strstr(p0,":");
+				p0 ++;
+
 				if(*p0 == '1')				//开启FOTA
 				{
 					Fs.FotaSwitch = 0x01;
 					Flag.NeedUpdateFs = 1;
-					strcpy(RespServiceBuf,"c17:1");
+					strcpy(RespServiceBuf,"\\\"c17\\\":1");
 				}
 				else if(*p0 == '0')
 				{
 					Fs.FotaSwitch = 0xAA;
 					Flag.NeedUpdateFs = 1;		
-					strcpy(RespServiceBuf,"c17:0");			
+					strcpy(RespServiceBuf,"\\\"c17\\\":0");			
 				}
 				else
 				{
@@ -623,10 +626,10 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 			}
 
 			//远程升级：c18:4-W686IB_V0.0.1.bin-9caf17aecfcf907bc85ad1c187cb255b
-			else if(p0 == strstr(p0,"c18"))
+			else if((p0 = strstr(gprs_content,"c18")) != NULL)
 			{
 				p0 = strstr(p0,":");
-				p0 ++;
+				p0 += 3;
 				fota_type = *p0;
 
 				if((fota_type != '1')&&(fota_type != '4'))
@@ -674,8 +677,8 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 				//设置升级服务器域名和端口
 				memset(FsUpg.AppIpAdress,0,sizeof(FsUpg.AppIpAdress));
 //				strcpy(FsUpg.AppIpAdress,"http://stg-fota.mamosearch.com:80");		//最早的测试服
-//				strcpy(FsUpg.AppIpAdress," http://fota.mamoair.net:80");			//正式服务器
-				strcpy(FsUpg.AppIpAdress," http://stg-fota.mamoair.net:80");		//中间一版测试服务器
+//				strcpy(FsUpg.AppIpAdress,"http://fota.mamoair.net:80");			//正式服务器
+				strcpy(FsUpg.AppIpAdress,"http://stg-fota.mamoair.net:80");		//中间一版测试服务器
 
 				MD5Init(&Upgmd5);  					//初始化MD5
 
@@ -687,24 +690,27 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 					UpgInfo.RetryCnt = 2;				//升级失败重复次数
 
 					printf("Need upgrade the device,upgrade file name is: %s\r\n",FsUpg.AppFilePath);
-					strcpy(RespServiceBuf,gprs_content);
+					strncpy(RespServiceBuf,gprs_content + 1,strlen(gprs_content) - 2);	//去掉前后的“{}”
 				}
 				else if(fota_type == '1')
 				{
 					Flag.NeedSendResponse = 1;
 					UpgInfo.NeedWaitUpgrade = 1;
-					strcpy(RespServiceBuf,gprs_content);
+					strncpy(RespServiceBuf,gprs_content + 1,strlen(gprs_content) - 2);
 				}
 				
 
 			}
 
 			//修改传感器数据检测时间间隔
-			else if(p0 == strstr(p0,"c21:"))
+			else if((p0 = strstr(gprs_content,"c21")) != NULL)
 			{
 				unsigned short Interval_ck_Temp = 0;
-				p0 += 4;
-				p1 = strstr(p0,"\"}}");
+
+				p0 = strstr(p0,":");
+				p0 ++;
+
+				p1 = strstr(p0,"}");
 
 				if(p1 - p0 <= 7)			
 				{
@@ -718,7 +724,7 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 					Fs.SensorCkInterval = Interval_ck_Temp;
 
 					Flag.NeedUpdateFs = 1;	
-					sprintf(RespServiceBuf,"c21:%d",Fs.SensorCkInterval);
+					sprintf(RespServiceBuf,"\\\"c21\\\":%d",Fs.SensorCkInterval);
 				}
 				else
 				{
@@ -728,11 +734,15 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 			}
 
 			//修改上传时间间隔
-			else if(p0 == strstr(p0,"c22:"))
+			else if((p0 = strstr(gprs_content,"c22")) != NULL)
 			{
 				unsigned short Interval_Temp = 0;
-				p0 += 4;
-				p1 = strstr(p0,"\"}}");
+
+				p0 = strstr(p0,":");
+				p0 ++;
+
+	//			p1 = strstr(p0,"\"}}");
+				p1 = strstr(p0,"}");
 
 				if(p1 - p0 <= 7)			
 				{
@@ -748,7 +758,7 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 					IntervalTemp = Interval_Temp;
 
 					Flag.NeedUpdateFs = 1;	
-					sprintf(RespServiceBuf,"c22:%d",Fs.Interval);
+					sprintf(RespServiceBuf,"\\\"c22\\\":%d",Fs.Interval);
 				}
 				else
 				{
@@ -759,14 +769,16 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 			}
 
 			//恢复出厂设置
-			else if(p0 == strstr(p0,"c23:"))
+			else if((p0 = strstr(gprs_content,"c23")) != NULL)
 			{
-				p0 += 4;
+				p0 = strstr(p0,":");
+				p0 ++;
+
 				if(*p0 == '1')				//开启FOTA
 				{
 					Flag.NeedClrValueFile = 1;
 					Flag.NeedResponseFrist = 1;	
-					strcpy(RespServiceBuf,"c23:1");
+					strcpy(RespServiceBuf,"\\\"c23\\\":1");
 				}
 				else if(*p0 == '0')
 				{
@@ -781,12 +793,14 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 			}
 
 			//修改二氧化碳sensor阈值，格式：c24:1000,1500
-			else if(p0 == strstr(p0,"c24:"))
+			else if((p0 = strstr(gprs_content,"c24")) != NULL)
 			{
 				unsigned short WarnThresholdTemp = 0;
 				unsigned short AlarmThresholdTemp = 0;
 
-				p0 += 4;
+				p0 = strstr(p0,":");
+				p0 ++;
+
 				p1 = strstr(p0,",");
 
 				if(p1 - p0 <= 5)			
@@ -813,7 +827,7 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 					Fs.Co2AlarmThreshold = AlarmThresholdTemp;
 
 					Flag.NeedUpdateFs = 1;	
-					sprintf(RespServiceBuf,"c24:%d,%d",Fs.Co2WarnThreshold,Fs.Co2AlarmThreshold);
+					sprintf(RespServiceBuf,"\\\"c24\\\":%d,%d",Fs.Co2WarnThreshold,Fs.Co2AlarmThreshold);
 				}
 				else
 				{
@@ -824,14 +838,16 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 			}
 
 			//需要校准二氧化碳传感器
-			else if(p0 == strstr(p0,"c25:"))
+			else if((p0 = strstr(gprs_content,"c25")) != NULL)
 			{
-				p0 += 4;
+				p0 = strstr(p0,":");
+				p0 ++;
+
 				if(*p0 == '1')				
 				{
 					Flag.NeedCalibrateCo2 = 1;
 					Flag.NeedResponseFrist = 1;	
-					strcpy(RespServiceBuf,"c25:1");
+					strcpy(RespServiceBuf,"\\\"c25\\\":1");
 				}
 				else if(*p0 == '0')
 				{
@@ -846,11 +862,13 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 			}
 
 			//上报设备参数
-			else if(p0 == strstr(p0,"c26:"))
+			else if((p0 = strstr(gprs_content,"c26")) != NULL)
 			{
 				u8 CalibrateState_temp = 0;
 
-				p0 += 4;
+				p0 = strstr(p0,":");
+				p0 ++;
+
 				if(*p0 == '1')				
 				{
 					if(Fs.AutoCalibrateState == 1)
@@ -863,7 +881,7 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 					}
 
 					Flag.NeedResponseFrist = 1;	
-					sprintf(RespServiceBuf,"c21:%d,c22:%d,c24:%d,%d,c27:%d",Fs.SensorCkInterval,Fs.Interval,Fs.Co2WarnThreshold,Fs.Co2AlarmThreshold,CalibrateState_temp);
+					sprintf(RespServiceBuf,"\\\"c21\\\":%d,\\\"c22\\\":%d,\\\"c24\\\":%d,%d,\\\"c27\\\":%d",Fs.SensorCkInterval,Fs.Interval,Fs.Co2WarnThreshold,Fs.Co2AlarmThreshold,CalibrateState_temp);
 				}
 				else if(*p0 == '0')
 				{
@@ -877,22 +895,24 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 			}
 
 			//二氧化碳传感器自动校准关闭/开启
-			else if(p0 == strstr(p0,"c27:"))
+			else if((p0 = strstr(gprs_content,"c27")) != NULL)
 			{
-				p0 += 4;
+				p0 = strstr(p0,":");
+				p0 ++;
+
 				if(*p0 == '0')				
 				{
 					Fs.AutoCalibrateState = 1;	
 					Flag.NeedCloseAutoCalib = 1;
 					Flag.NeedUpdateFs = 1;	
-					strcpy(RespServiceBuf,"c27:0");
+					strcpy(RespServiceBuf,"\\\"c27\\\":0");
 				}
 				else if(*p0 == '1')
 				{
 					Fs.AutoCalibrateState = 0xAA;	
 					Flag.NeedOpenAutoCalib = 1;
 					Flag.NeedUpdateFs = 1;	
-					strcpy(RespServiceBuf,"c27:1");
+					strcpy(RespServiceBuf,"\\\"c27\\\":1");
 				}
 				else
 				{
@@ -903,9 +923,9 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 
 			//设置APN,Usr name,password
 			//c28:device2.iotpf.mb.softbank.jp,8883
-			else if(p0 == strstr(p0,"c28:"))
+			else if((p0 = strstr(gprs_content,"c28")) != NULL)
 			{
-				p0 += 4;
+
 			}
 		}
 		else

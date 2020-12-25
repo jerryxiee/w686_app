@@ -351,7 +351,7 @@ void Read_SHT31_Data(void)
     // T = -45 + 175 * tem / (2^16-1)
     if(sensor_type == 2)
     {
-        temperature_value_temp= (175.0*(float)t_sample/65535.0-45.0) - 5 ;  //如果是伟盛的传感器，这里修正5度
+        temperature_value_temp= (175.0*(float)t_sample/65535.0-45.0) - 4.5 ;  //如果是伟盛的19c传感器，这里修正5度
     }	                  
 	else
     {

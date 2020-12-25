@@ -36,12 +36,25 @@ void WIRELESS_UpgradeReceive(char *pSrc)
 	p1 += 2;
 	if (UpgInfo.UpgPacketNums == 0)
 	{
-		UpgInfo.UpgExFlashAddr = EXFLASH_APP1_ADDR;
+		if(UpgInfo.FotaFileType == 1)			//升级文件是nrf52
+		{
+			UpgInfo.UpgExFlashAddr = EXFLASH_BTAPP_ADDR;
 
-		//一个扇区64k，这里格式化三个扇区用于存储远程升级数据
-		EXFLASH_EraseSector(EXFLASH_APP1_ADDR);				
-		EXFLASH_EraseSector(EXFLASH_APP1_ADDR + (64*1024));			
-		EXFLASH_EraseSector(EXFLASH_APP1_ADDR + (128*1024));			
+			//一个扇区64k，这里格式化三个扇区用于存储远程升级数据
+			EXFLASH_EraseSector(EXFLASH_BTAPP_ADDR);				
+			EXFLASH_EraseSector(EXFLASH_BTAPP_ADDR + (64*1024));			
+			EXFLASH_EraseSector(EXFLASH_BTAPP_ADDR + (128*1024));			
+		}
+		else									//升级文件是91
+		{
+			UpgInfo.UpgExFlashAddr = EXFLASH_APP1_ADDR;
+
+			//一个扇区64k，这里格式化三个扇区用于存储远程升级数据
+			EXFLASH_EraseSector(EXFLASH_APP1_ADDR);				
+			EXFLASH_EraseSector(EXFLASH_APP1_ADDR + (64*1024));			
+			EXFLASH_EraseSector(EXFLASH_APP1_ADDR + (128*1024));
+		}
+			
 	}
 
 		
@@ -86,21 +99,31 @@ void WIRELESS_UpgradeReceive(char *pSrc)
 		Md5StrToHex(Md5FileAsc,(u8 *)FileMd5);
 		
 		if(memcmp(FileMd5,UpgInfo.Md5decrypt,16)==0)				//比较MD5计算值和给定值，相等则写入标志并重启
-//		if(1)														//暂时不比较MD5校验
 		{
 			FsUpg.UpgEnJamp=0x55;
 			FsUpg.AppLenBuf=UpgInfo.UpgExFlashAddr;
 			memset(FsUpg.HttpError,0,sizeof(FsUpg.HttpError));
 			strcpy(FsUpg.HttpError,"MD5 verify OK!\r\n");		
 
-			EXFLASH_EraseSector(FLASH_UPG_ADDR);
-			EXFLASH_WriteBuffer((u8 *)&FsUpg,FLASH_UPG_ADDR,sizeof(FsUpg));					
-		   
-			printf("\r\nComplete updata file download,reset device!\r\n");
-			Flag.NeedModuleOff=1;
-			Usr_ModuleTurnOff();
-
-			NVIC_SystemReset();    
+			if(UpgInfo.FotaFileType == 0)				//如果是686主机升级，这里校验成功后需要重启设备
+			{
+				EXFLASH_EraseSector(FLASH_UPG_ADDR);
+				EXFLASH_WriteBuffer((u8 *)&FsUpg,FLASH_UPG_ADDR,sizeof(FsUpg));					
+				
+				printf("\r\nComplete updata file download,reset device!\r\n");
+				Flag.NeedModuleOff=1;
+				Usr_ModuleTurnOff();
+				NVIC_SystemReset(); 
+			}
+			else										//如果是升级蓝牙，下载完成之后，需要开始升级蓝牙
+			{
+				UpgInfo.FotaFileType = 0;
+				UpgInfo.NeedDfuNrf52 = 1;
+				BtDfu_Info.Retry_Cnt = 2;
+				Flag.IsUpgrate = 0;
+				UpgInfo_InitValue();
+			}
+   
 		}
 		else													//失败
 		{

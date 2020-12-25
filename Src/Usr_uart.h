@@ -6,7 +6,7 @@
 #define UART1_BUF_LEN 1500       
 #define UART2_BUF_LEN 640 
 #define UART3_BUF_LEN 100
-#define UART4_BUF_LEN 100
+#define UART4_BUF_LEN 500
 
 #define AT_PORT USART1
 
@@ -25,6 +25,8 @@ extern char Uart4Buf[UART4_BUF_LEN];
 void UART_Init(void);
 void UART_AtInit(void);
 void UART_Send(USART_TypeDef *USARTx, uint8_t *data,uint16_t dataleng);
+void Usr_USART4_UART_DeInit(void);
+void Usr_USART4_UART_Init(void);
 
 void UART_Handle(void);
 void At_Receive(void);

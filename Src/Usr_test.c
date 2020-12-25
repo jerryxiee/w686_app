@@ -36,11 +36,13 @@ void Test_Receive(void)
     char temp_buf[20] = {0};
     char read_buf[20] = {0};
     char send_buf[150] = {0};
+    u8   step = 0;
 
     if((Test.WaitEnterTest > 0) && (strstr(Uart3Buf, "AT^TST")))
 	{
 		Test.TestStep = 0;
         Test.InTesting = 1;
+        Flag.NeedBtPowerOn = 1;
         memset(&Test_Result,0,sizeof(Test_Result));
         EXFLASH_ReadBuffer((u8 *)&Test_Result,TESTRESULTADDR_0,sizeof(Test_Result));
 	}
@@ -78,6 +80,14 @@ void Test_Receive(void)
         {
             UART_Send(USART3,"The IMEI Save Failed\r\n",23); 
         }
+    }
+
+    //读设置的IMEI
+    if(strstr(Uart3Buf, "AT^READIMEI="))
+    {
+        EXFLASH_ReadBuffer((u8 *)read_buf,IMEIADDR,15);
+        sprintf(send_buf,"^DEV@SETIMEI=%s\r\n",read_buf);
+        UART_Send(USART3,(u8 *)send_buf,strlen(send_buf)); 
     }
 
     if(Test.TestStep == 0xFF)      
@@ -194,35 +204,39 @@ void Test_Receive(void)
         Test.WaitTestCnt = 0;
         p0 = strstr(Uart3Buf, "AT^NOTE=");
         p0 += 8;
+        step = (u8)atoi(p0);
 
-        switch (*p0)
+        switch (step)
         {
-         case '1':
+         case 1:
             Test.TestStep = 1;
             break;
-         case '2':
+         case 2:
             Test.TestStep = 2;
             break;   
-         case '3':
+         case 3:
             Test.TestStep = 3;
             break;     
-         case '4':
+         case 4:
             Test.TestStep = 4;
             break;   
-         case '5':
+         case 5:
             Test.TestStep = 5;
             break;
-         case '6':
+         case 6:
             Test.TestStep = 6;
             break;   
-         case '7':
+         case 7:
             Test.TestStep = 7;
             break;     
-         case '8':
+         case 8:
             Test.TestStep = 8;
             break;
-         case '9':
+         case 9:
             Test.TestStep = 9;
+            break;
+         case 10:
+            Test.TestStep = 10;
             break;
         default:
             break;
@@ -231,10 +245,13 @@ void Test_Receive(void)
     }
 }
 
+char SendDataTemp[500];
 
 void Test_Handle(void)
 {
-    char SendDataTemp[100] = {0};
+    char read_buf[20] = {0};
+
+    memset(SendDataTemp,0,sizeof(SendDataTemp));
 
     if((Test.WaitTestCnt > 0) || (Test.TestOver))
     {
@@ -272,7 +289,8 @@ void Test_Handle(void)
                 {
                     if(Test.ExflashTestOk)
                     {
-                        sprintf(SendDataTemp,"^EXFLASH@KEY=1\r\n");
+                        EXFLASH_ReadBuffer((u8 *)read_buf,IMEIADDR,15);
+                        sprintf(SendDataTemp,"^EXFLASH@KEY=1;SETIMEI=%s\r\n",read_buf);
                     }
                     else
                     {
@@ -335,6 +353,20 @@ void Test_Handle(void)
                 if(Test.GetGsmCsq) 
                 {
                     sprintf(SendDataTemp,"^GSM@CSQ=%s\r\n",CsqValue);
+                    UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
+                    Test.TestOverStep = Test.TestStep;
+                }      
+                else
+                {
+                    sprintf(SendDataTemp,"^NOTE@T0=%d\r\n",Test.TestStep);
+                    UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));               /* code */
+                }
+            break;   
+
+            case 10:            //测试步骤10,读取BT的mac地址(6个字节)+信号强度(1个字节)
+                if(Test.GetBtInfo) 
+                {
+                    sprintf(SendDataTemp,"^BT@DEVMAC=%s;SCANMAC=%s\r\n",Bt_Mac,Scan_Mac);
                     UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
                     Test.TestOverStep = Test.TestStep;
                 }      

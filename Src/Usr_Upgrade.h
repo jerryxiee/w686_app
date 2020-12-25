@@ -30,6 +30,8 @@ typedef struct{
 	unsigned char 	NeedDiscontHttp:1;			//需要断开HTTP连接
 	unsigned char 	NeedWaitUpgrade:1;			//需要等到指定时间后开始升级
 	unsigned char 	HaveGetRankData:1;			//已经获取到了随机升级倒计时数
+	unsigned char 	FotaFileType:1;				//下载的文件类型，0代表是w686主机程序，1代表是nrf52的升级程序
+	unsigned char 	NeedDfuNrf52:1;				//需要开始更新蓝牙芯片程序
 
 	unsigned char 	AppDownloadOk;		//文件已经成功下载完成
 	unsigned short 	UpgPacketNums;
@@ -44,6 +46,7 @@ typedef struct{
 extern UPG_INFO UpgInfo;
 extern FS_UPG FsUpg;
 extern char Md5FileAsc[50];
+extern char FileMd5[20];
 
 void WIRELESS_UpgradeReceive(char *pSrc);
 void UpgInfo_InitValue(void);

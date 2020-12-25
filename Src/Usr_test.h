@@ -26,6 +26,7 @@ typedef struct{
     unsigned char   GsmModuleOk:1;      //GSM模块测试OK（可以正常识别SIM及搜索到CSQ）
     unsigned char   ExflashTestOver:1;  //外部flash读写测试完成
     unsigned char   NeedCheckATI:1;     //需要查询模块的ATI
+    unsigned char   GetBtInfo:1;        //收到蓝牙应答的信息
 
     unsigned char   WaitTestCnt;        //Test_Handle执行周期
 	unsigned char 	WaitEnterTest;		//开机后等待外部发送指令进入测试模式的窗口时间

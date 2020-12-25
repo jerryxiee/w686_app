@@ -285,7 +285,6 @@ void GPIO_init(void)
     LED_SENSOR_GREEN_ON;
     CCS811_WAKE_RESET;
     MODULE_WAKEUP_SET;
-//    BT_POWER_EN_SET;
 }
 
 

@@ -38,6 +38,7 @@
 #include "Usr_test.h"
 #include "Usr_adc.h"
 #include "MD5.h"
+#include "Usr_bt.h"
 
 #define USR_RTT_DEBUG	1			//为1时，使用RTT输出printf；为0时，使用串口输出printf
 
@@ -87,8 +88,6 @@
 #define BUILD_DAY_CH0 ((__DATE__[4] >= '0') ? (__DATE__[4]) : '0')
 #define BUILD_DAY_CH1 (__DATE__[ 5])
 
-
-
 #define BUILD_HOUR_CH0 (__TIME__[0])
 #define BUILD_HOUR_CH1 (__TIME__[1])
 
@@ -97,6 +96,10 @@
 
 #define BUILD_SEC_CH0 (__TIME__[6])
 #define BUILD_SEC_CH1 (__TIME__[7])
+
+
+typedef enum {false = 0,true = 1} bool;
+
 
 #ifndef _FLAG_
 #define _FLAG_
@@ -220,6 +223,11 @@ typedef struct FLAG_
 	unsigned char NeedCloseAutoCalib:1;			//需要关闭二氧化碳传感器的自动校准
 	unsigned char NeedOpenAutoCalib:1;			//需要开启二氧化碳传感器的自动校准
 	unsigned char NeedGetRangData:1;			//需要计算随机数
+
+	unsigned char NeedDownLoadBtFile:1;			//需要从服务器下载nrf52的升级文件
+	unsigned char NeedBtPowerOn:1;				//需要蓝牙开机
+	unsigned char NeedBtPowerOff:1;				//需要蓝牙关机
+	unsigned char BtPowerOn:1;					//蓝牙开关机状态，1为开机，0为关机
 }FLAG;
 #endif
 

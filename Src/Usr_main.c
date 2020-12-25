@@ -17,7 +17,7 @@ unsigned char CheckModeCnt;		//模块开机后，等待主动上报内容，超�
 const unsigned char SoftwareBuilt[50] = {0};
 char Edition[50] = {0};
 
-char Edition_STD[50] = {"W686IB_V0.0.1_T09"};				//程序的稳定版本，手动设置版本型号
+char Edition_STD[50] = {"W686AIB_V0.0.1_T18"};				//程序的稳定版本，手动设置版本型号
 char HardWare_Edition[50] = {"TY197_MAIN_V2.0"};		//硬件版本，手动设置版本型号
 
 u8 Built_year[5] = {'\0'};
@@ -70,8 +70,8 @@ int main(void)
 		Sensor_Handle();
 		Flag_Check();
 		Test_Handle();
+		Bt_Handle();
 		WatchDogCnt = 0;
-
 	}
 }
 
@@ -114,6 +114,7 @@ void Usr_InitValue(void)
 	Flag.NtpGetCCLK = 1;
 	Flag.NeedSetNtp = 1;
 	Flag.NeedGetIMEI = 1;
+	
 	#if USE_SOFTSIM
 	Flag.NeedChangeSoftSim = 1;
 	#endif
@@ -275,6 +276,7 @@ void Flag_Check(void)
 		static u16 backup_data = 0;
 
 		if((Rtc.hour != 1) && (!UpgInfo.HaveGetRankData))
+//		if((Rtc.hour != 13) && (!UpgInfo.HaveGetRankData))
 		{
 			return;
 		}
@@ -310,6 +312,27 @@ void Flag_Check(void)
 		// sprintf(RespServiceBuf,"Fota file name is :%s,ready upgrade...",FsUpg.AppFilePath);
 	}
 	
+	//开始下载nrf52的固件包
+	if(Flag.NeedDownLoadBtFile)
+	{
+		Flag.NeedDownLoadBtFile = 0;
+
+		UpgInfo.FotaFileType = 1;
+		UpgInfo.NeedUpdata = 1;				//需要开始升级
+		UpgInfo.RetryCnt = 2;				//升级失败重复次数
+
+		memset(FsUpg.AppIpAdress,0,sizeof(FsUpg.AppIpAdress));
+		memset(FsUpg.AppFilePath,0,sizeof(FsUpg.AppFilePath));
+		memset(FileMd5,0,sizeof(FileMd5));
+
+		strcpy(FsUpg.AppIpAdress,"http://stg-fota.mamosearch.com:80");			//正式服务器
+		strcpy(FsUpg.AppFilePath,"/fw/52-dfu-new.bin");
+		strcpy(FileMd5,"8d81d6a06350f2a991e2b187d094feb0");
+
+		MD5Init(&Upgmd5); 
+
+	}
+
 	if(Flag.NeedGetRangData)
 	{
 		Flag.NeedGetRangData = 0;

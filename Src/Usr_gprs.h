@@ -32,7 +32,7 @@ typedef enum{
 	#define IMEI_MANUAL	    ""
 	#define JP_AT_USE		1
 	#define USE_SOFTSIM		0
-	#define USR_PLAM_TYPE	1		//0,是量产服务器，1是标准服务器，2是使用测试服务器
+	#define USR_PLAM_TYPE	0		//0,是量产服务器，1是标准服务器，2是使用测试服务器, 3是使用苏州服务器
 #else
 	#define IMEI_MANUAL	"999999999999999"
 	//#define IMEI_MANUAL	""

@@ -225,6 +225,16 @@ void TIMER_SecCntHandle(void)
 
 	baseSecCnt ++;
 
+	if(BtDfu_Info.Retry_Wait_Cnt > 0)
+	{
+		BtDfu_Info.Retry_Wait_Cnt --;
+
+		if(BtDfu_Info.Retry_Wait_Cnt == 0)
+		{
+			UpgInfo.NeedDfuNrf52 = 1;
+		}
+	}
+
 	//每隔12个小时上传一包登入包
 	if(baseSecCnt % (12 * 3600) == 0)
 	{
@@ -334,11 +344,22 @@ void TIMER_SecCntHandle(void)
 		Flag.BatChk = 1; 		
 	}
 
-	//查电量
-	if (baseSecCnt % 300 == 6) 
+	if(!Flag.HaveGetCCID)
 	{
-		Flag.NeedcheckCCID = 1; 		
+		if (baseSecCnt % 10 == 6) 
+		{
+			Flag.NeedcheckCCID = 1; 		
+		}
 	}
+	else
+	{
+		if (baseSecCnt % 300 == 6) 
+		{
+			Flag.NeedcheckCCID = 1; 		
+		}
+	}
+	
+
 
 	if (ResetLeftCnt > 0)
 	{
@@ -430,6 +451,10 @@ void TIMER_BaseCntHandle(void)
 		Test.WaitTestCnt --;
 	}
 
+	if(BtDfu_Info.WaitRspDataOverTime > 0)
+	{
+		BtDfu_Info.WaitRspDataOverTime --;
+	}
 
 	if(GsmOn.PowerOffWaitCnt > 0)
 	{

@@ -48,3 +48,4 @@
 ..\output\usr_test.o: ..\Src\Usr_test.h
 ..\output\usr_test.o: ..\Src\Usr_adc.h
 ..\output\usr_test.o: ..\Src\MD5.h
+..\output\usr_test.o: ..\Src\Usr_bt.h
