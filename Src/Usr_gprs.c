@@ -312,7 +312,7 @@ u16 Mqtt_SendPacket(GPRS_TYPE switch_tmp)
 	{
 	case LOGIN:
 
-		strcat(GprsContent, "a0:"); //时间戳
+		strcat(GprsContent, "\"a0\":"); //时间戳
 		sprintf(Temp, "\"%d\",", Timestamp);
 		strcat(GprsContent, Temp);
 
@@ -322,18 +322,18 @@ u16 Mqtt_SendPacket(GPRS_TYPE switch_tmp)
 		// strcat(GprsContent, "a2:"); //公司名称
 		// strcat(GprsContent, "\"IOTBANK\",");
 
-		strcat(GprsContent, "a3:"); //产品名称
+		strcat(GprsContent, "\"a3\":"); //产品名称
 		strcat(GprsContent, "\"W686A\",");
 
-		strcat(GprsContent, "a4:"); //IMEI
+		strcat(GprsContent, "\"a4\":"); //IMEI
 		sprintf(Temp, "\"%s\",", IMEI);
 		strcat(GprsContent, Temp);
 
-		strcat(GprsContent, "a5:"); //CCID
+		strcat(GprsContent, "\"a5\":"); //CCID
 		sprintf(Temp, "\"%s\",", CCID);
 		strcat(GprsContent, Temp);
 
-		strcat(GprsContent, "a8:"); //固件版本
+		strcat(GprsContent, "\"a8\":"); //固件版本
 		sprintf(Temp, "\"%s\"", Edition_STD);
 		strcat(GprsContent, Temp);
 
@@ -345,31 +345,31 @@ u16 Mqtt_SendPacket(GPRS_TYPE switch_tmp)
 
 	case DATA:
 
-		strcat(GprsContent, "a0:"); //时间戳
+		strcat(GprsContent, "\"a0\":"); //时间戳
 		sprintf(Temp, "\"%d\",", Timestamp);
 		strcat(GprsContent, Temp);
 
-		// strcat(GprsContent, "b0:"); //电池电量
+		// strcat(GprsContent, "\"b0\":"); //电池电量
 		// sprintf(Temp, "\"%d\",", bat_percente);
 		// strcat(GprsContent, Temp);
 
-		// strcat(GprsContent, "b1:"); //充电状态
+		// strcat(GprsContent, "\"b1\":"); //充电状态
 		// sprintf(Temp, "\"%s\",", NotSupport);
 		// strcat(GprsContent, Temp);
 
-		strcat(GprsContent, "s1:"); //湿度
+		strcat(GprsContent, "\"s1\":"); //湿度
 		sprintf(Temp, "\"%.1f\",", humidity_value);
 		strcat(GprsContent, Temp);
 
-		strcat(GprsContent, "s2:"); //二氧化碳浓度
+		strcat(GprsContent, "\"s2\":"); //二氧化碳浓度
 		sprintf(Temp, "\"%d\",", co2_module_value);
 		strcat(GprsContent, Temp);
 
-		strcat(GprsContent, "s3:"); //温度
+		strcat(GprsContent, "\"s3\":"); //温度
 		sprintf(Temp, "\"%.1f\",", temperature_value);
 		strcat(GprsContent, Temp);
 
-		strcat(GprsContent, "p3:"); //基站
+		strcat(GprsContent, "\"p3\":"); //基站
 		sprintf(Temp, "\"%s_%s_%s_%s\"", Cid,Lac,Mcc,Mnc);
 		strcat(GprsContent, Temp);
 
@@ -799,7 +799,7 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 				unsigned short AlarmThresholdTemp = 0;
 
 				p0 = strstr(p0,":");
-				p0 ++;
+				p0 += 3;
 
 				p1 = strstr(p0,",");
 
@@ -808,7 +808,7 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 					WarnThresholdTemp = Ascii2BCD_u16(p0, p1-p0);
 
 					p0 = p1 + 1;
-					p1 = strstr(p0,"\"}}");
+					p1 = strstr(p0,"\\\"}");
 
 					if(p1 - p0 <= 5)	
 					{
@@ -827,7 +827,7 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 					Fs.Co2AlarmThreshold = AlarmThresholdTemp;
 
 					Flag.NeedUpdateFs = 1;	
-					sprintf(RespServiceBuf,"\\\"c24\\\":%d,%d",Fs.Co2WarnThreshold,Fs.Co2AlarmThreshold);
+					sprintf(RespServiceBuf,"\\\"c24\\\":\\\"%d,%d\\\"",Fs.Co2WarnThreshold,Fs.Co2AlarmThreshold);
 				}
 				else
 				{

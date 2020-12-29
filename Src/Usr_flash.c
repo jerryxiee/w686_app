@@ -136,13 +136,14 @@ void FS_InitValue(void)
 
 	//flash空白 要初始化
 //	if ('O' != Fs.Ok[0] || 'K' != Fs.Ok[1])
+
 	if(strcmp(Fs.IpAdress,"device2.iotpf.mb.softbank.jp") != 0)
 	{
 		strcpy(Fs.UserID, "999999000004"); 				//这个变量在w686中暂时不使用
 		printf("\r\nFormat the eeprom\r\n");
 		FS_FactroyValue();
 		Flag.NeedUpdateFs = 1;
-		return;
+//		return;
 	}
 
 	if (FsUpg.UpgEnJamp == 0xaa)
@@ -180,7 +181,19 @@ void FS_InitValue(void)
 		}
 	}
 	
-
+	if(strlen(IMEI_MANUAL) == 15)		//如果手动设定的IMEI，优先使用手动设置的IMEI
+	{
+		strcpy(IMEI,IMEI_MANUAL);
+	}
+	else if(strlen(IMEI_ID) == 15)		//如果外部写入了IMEI，使用外部写入的IMEI
+	{
+		strcpy(IMEI,IMEI_ID);
+	}
+	if(strcmp(Fs.DeviceImei,IMEI) != 0)		//如果IMEI和自身保存的有变化，更新
+	{
+		strncpy(Fs.DeviceImei,IMEI,sizeof(Fs.DeviceImei));
+		Flag.NeedUpdateFs = 1;
+	}
 
 	printf("\r\n------Device parameters as follows:------\r\n\r\n");
 	#if USR_FOR_JP

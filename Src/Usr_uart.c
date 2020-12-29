@@ -270,6 +270,26 @@ void At_Receive(void)
 	}
 	#endif
 
+	if(Test.SendCheckCCID)
+	{
+		Test.SendCheckCCID = 0;
+		
+		if ((p1 = strstr(Uart1Buf, "OK")) != NULL)
+		{
+			p1 = strstr(Uart1Buf, "\r\n");
+			p1 += 2;
+			ptem = strstr(p1, "\r\n");
+			if((ptem - p1 < 30) && (ptem - p1 > 10))
+			{
+				memset(CCID, '\0', 30);
+				strncpy(CCID, p1, ptem - p1);	
+
+				Flag.HaveGetCCID = 1;
+				Test.GetGsmCCID = 1;
+			}
+		}
+	}
+
 }
 
 

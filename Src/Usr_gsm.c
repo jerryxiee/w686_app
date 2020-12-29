@@ -128,11 +128,11 @@ void Usr_ModuleTurnOn(void)
 	switch (GsmOn.PowerOnStep)
 	{
 		case 0:		
-			//断开模块电源1s后，开启电源，持续3秒							
+			//断开模块电源1s后，开启电源，持续1秒							
 			if(GsmOn.PowerOffWaitCnt == 0)
 			{
 				GsmOn.PowerOnStep ++;
-				GsmOn.PowerOnWaitCnt = 30;
+				GsmOn.PowerOnWaitCnt = 10;
 				POWER_ON;
 			}
 			break;

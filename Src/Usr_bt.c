@@ -8,7 +8,7 @@
 #define EVERY_PACK_LEN				64			//每一个分包固件大小为64个字节
 #define EVERY_FWPACK_LEN			4096		//每一个固件分包大小为4k个字节
 
-char Bt_Mac[20];			//nrf52的mac地址
+char Bt_Info[50];			//nrf52的mac地址
 char Scan_Mac[400];			//nrf52的扫描到的mac地址及信号强度
 
 const u8 To_Pin_App[6]      = {0x59,0x01,0x00,0x32,0x21,0x21};
@@ -670,12 +670,20 @@ void BT_Data_Receive(char *pSrc)
 
 	switch (data_type)
 	{
-		case 0x41:
-			memset(Bt_Mac,0,sizeof(Bt_Mac));
-			Bt_Mac_Transform(p0,Bt_Mac,data_len - 1);
+		//蓝牙mac地址和软件版本,mac地址是十六进制，软件版本是字符串，需要分开解析和接收
+		case 0x41:		
+			if(data_len > sizeof(Bt_Info))	break;
+
+			memset(Bt_Info,0,sizeof(Bt_Info));
+			Bt_Mac_Transform(p0,Bt_Info,6);		//转换mac地址为字符串
+			p0 += 6;
+		    strcat(Bt_Info,";BTSW=");
+			memcpy(&Bt_Info[18],p0,data_len - 7);
 			break;
 
 		case 0x42:
+			if(data_len > sizeof(Scan_Mac))	break;
+
 			memset(Scan_Mac,0,sizeof(Scan_Mac));
 			Bt_Mac_Transform(p0,Scan_Mac,data_len - 1);
 			Test.GetBtInfo = 1;

@@ -241,6 +241,13 @@ void TIMER_SecCntHandle(void)
 		Flag.NeedLogIn = 1;
 	}
 
+	//测试模式下，每2秒检测一次csq
+	if((Test.InTesting)&&(baseSecCnt % 2 == 0))
+	{
+		Flag.CsqChk = 1;
+	}
+
+
 	if (baseSecCnt % Fs.SensorCkInterval == 0)			//在数据上传前提前一点时间检查传感器数据
 	{
 		Flag.NeedCheckCO2Value = 1;
@@ -274,7 +281,7 @@ void TIMER_SecCntHandle(void)
 	}
 
 
-	if ((baseSecCnt % 10 == 4) && (baseSecCnt > 4))
+	if ((baseSecCnt % 30 == 4) && (baseSecCnt > 4))
 	{
 		Flag.CsqChk = 1;		 //查信号强度
 		Flag.Bma250NeedInit = 1; //查振动传感器状态

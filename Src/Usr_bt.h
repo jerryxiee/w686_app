@@ -59,7 +59,7 @@ typedef struct{
 
 extern BT_TYPE 		BtType; 
 extern BTDFU_INFO 	BtDfu_Info;
-extern char 		Bt_Mac[20];			
+extern char 		Bt_Info[50];			
 extern char 		Scan_Mac[400];
 
 u16 BT_SendPacket(BT_TYPE temType, char *pDst);

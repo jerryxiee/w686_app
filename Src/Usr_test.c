@@ -86,7 +86,14 @@ void Test_Receive(void)
     if(strstr(Uart3Buf, "AT^READIMEI="))
     {
         EXFLASH_ReadBuffer((u8 *)read_buf,IMEIADDR,15);
-        sprintf(send_buf,"^DEV@SETIMEI=%s\r\n",read_buf);
+
+        memset(Test_Result.GetAll,0,sizeof(Test_Result.GetAll));      
+        EXFLASH_ReadBuffer((u8 *)&Test_Result,TESTRESULTADDR_0,sizeof(Test_Result));
+ 
+        p1 = strstr(Test_Result.GetAll, "\r\n");
+        *p1 = 0;
+
+        sprintf(send_buf,"^DEV@SETIMEI=%s;%s\r\n",read_buf,Test_Result.GetAll);
         UART_Send(USART3,(u8 *)send_buf,strlen(send_buf)); 
     }
 
@@ -121,7 +128,8 @@ void Test_Receive(void)
             memset(Test_Result.Get1,0,sizeof(Test_Result.Get1));
             memset(Test_Result.GetAll,0,sizeof(Test_Result.GetAll));
             strncpy(Test_Result.Get1,p0,p1 - p0);
-            sprintf(Test_Result.GetAll,"IMEI=%s;ATI=%s;CCID=%s;GET0=%s;GET2=%s;GET3=%s;SW=%s;\r\n",IMEI_MODULE,GsmRev,CCID,Test_Result.Get0,Test_Result.Get2,Test_Result.Get3,Edition_STD);
+            sprintf(Test_Result.GetAll,"IMEI=%s;ATI=%s;CCID=%s;GET0=%s;GET2=%s;GET3=%s;DEVSW=%s;BTMAC=%s\r\n",\
+            IMEI_MODULE,GsmRev,CCID,Test_Result.Get0,Test_Result.Get2,Test_Result.Get3,Edition_STD,Bt_Info);
             if( Updata_TestResult() )
             {
                 sprintf(send_buf,"^DEV@SET1=%s\r\n",Test_Result.Get1);
@@ -238,6 +246,9 @@ void Test_Receive(void)
          case 10:
             Test.TestStep = 10;
             break;
+         case 11:
+            Test.TestStep = 11;
+            break;
         default:
             break;
         }
@@ -288,9 +299,8 @@ void Test_Handle(void)
                 if(Test.ExflashTestOver)
                 {
                     if(Test.ExflashTestOk)
-                    {
-                        EXFLASH_ReadBuffer((u8 *)read_buf,IMEIADDR,15);
-                        sprintf(SendDataTemp,"^EXFLASH@KEY=1;SETIMEI=%s\r\n",read_buf);
+                    {                        
+                        sprintf(SendDataTemp,"^EXFLASH@KEY=1\r\n");
                     }
                     else
                     {
@@ -350,9 +360,9 @@ void Test_Handle(void)
             break;       
 
             case 9:                     //测试步骤9,读取GSM信号强度
-                if(Test.GetGsmCsq) 
+                if(Test.HaveChanegNet) 
                 {
-                    sprintf(SendDataTemp,"^GSM@CSQ=%s\r\n",CsqValue);
+                    sprintf(SendDataTemp,"^GSM@CSQ=%s\r\n",Test.CsqValue);
                     UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
                     Test.TestOverStep = Test.TestStep;
                 }      
@@ -366,7 +376,7 @@ void Test_Handle(void)
             case 10:            //测试步骤10,读取BT的mac地址(6个字节)+信号强度(1个字节)
                 if(Test.GetBtInfo) 
                 {
-                    sprintf(SendDataTemp,"^BT@DEVMAC=%s;SCANMAC=%s\r\n",Bt_Mac,Scan_Mac);
+                    sprintf(SendDataTemp,"^BT@DEVMAC=%s;SCANMAC=%s\r\n",Bt_Info,Scan_Mac);
                     UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));
                     Test.TestOverStep = Test.TestStep;
                 }      
@@ -375,6 +385,13 @@ void Test_Handle(void)
                     sprintf(SendDataTemp,"^NOTE@T0=%d\r\n",Test.TestStep);
                     UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp));               /* code */
                 }
+            break;   
+
+            case 11:                    //测试步骤11,读取外部flash中设置的IMEI
+                EXFLASH_ReadBuffer((u8 *)read_buf,IMEIADDR,15);
+                sprintf(SendDataTemp,"^EXFLASH@SETIMEI=%s\r\n",read_buf);
+								UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp)); 
+								Test.TestOverStep = Test.TestStep;
             break;   
 
             default:

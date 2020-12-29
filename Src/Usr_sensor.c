@@ -351,14 +351,14 @@ void Read_SHT31_Data(void)
     // T = -45 + 175 * tem / (2^16-1)
     if(sensor_type == 2)
     {
-        temperature_value_temp= (175.0*(float)t_sample/65535.0-45.0) - 4.5 ;  //如果是伟盛的19c传感器，这里修正5度
+        temperature_value_temp= (175.0*(float)t_sample/65535.0-45.0) - 7.5 ;  //如果是伟盛的19c传感器，这里修正5度
     }	                  
 	else
     {
         temperature_value_temp= (175.0*(float)t_sample/65535.0-45.0) - 2 ;  //结果偏大，这里做一下修正 
     }
 #else
-    temperature_value_temp= (175.0*(float)t_sample/65535.0-45.0) - 2 ;  //结果偏大，这里做一下修正
+    temperature_value_temp= (175.0*(float)t_sample/65535.0-45.0) - 5 ;  //结果偏大，这里做一下修正
 #endif  
     humidity_value_temp= (100.0*(float)rh_sample/65535.0);                             // RH = hum*100 / (2^16-1)
 	

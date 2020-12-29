@@ -17,7 +17,8 @@ unsigned char CheckModeCnt;		//模块开机后，等待主动上报内容，超�
 const unsigned char SoftwareBuilt[50] = {0};
 char Edition[50] = {0};
 
-char Edition_STD[50] = {"W686AIB_V0.0.1_T18"};				//程序的稳定版本，手动设置版本型号
+char Edition_STD[50] = {"W686AIB_V1.0.1"};				//程序的稳定版本，手动设置版本型号
+//char Edition_STD[50] = {"W686AIB_V0.0.1_T29_suzhou_IIJ"};
 char HardWare_Edition[50] = {"TY197_MAIN_V2.0"};		//硬件版本，手动设置版本型号
 
 u8 Built_year[5] = {'\0'};
@@ -114,7 +115,7 @@ void Usr_InitValue(void)
 	Flag.NtpGetCCLK = 1;
 	Flag.NeedSetNtp = 1;
 	Flag.NeedGetIMEI = 1;
-	
+	Flag.NeedCheckNet = 1;
 	#if USE_SOFTSIM
 	Flag.NeedChangeSoftSim = 1;
 	#endif
@@ -139,6 +140,8 @@ void Usr_InitValue(void)
 		EXFLASH_WriteBuffer((u8 *)&FsUpg,FLASH_UPG_ADDR,sizeof(FsUpg));
 		printf("\r\nUpgrade App success!\r\n");
 	}
+
+
 
 	if(Fs.HaveCertificate == 0xAA)
 	{

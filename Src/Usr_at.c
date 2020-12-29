@@ -42,13 +42,19 @@ void AT_SendPacket(AT_TYPE temType, char *pDst)
 	case AT_CSQ:								//查询信号强度
 		strcpy(pDst, "AT+CSQ\r\n");
 		break;
+	case AT_CMNB_CHECK:							//查询网络类型
+		strcpy(pDst, "AT+CMNB?\r\n");
+		break;
 	case AT_CMNB_1:								//设置网络类型，1是仅使用CAT-M
 		strcpy(pDst, "AT+CMNB=1\r\n");
+		break;
+	case AT_CMNB_2:								//设置网络类型，2是仅使用NB网络
+		strcpy(pDst, "AT+CMNB=2\r\n");
 		break;
 	case AT_CMNB_3:								//设置网络类型，3是CAT-M和NB都使用
 		strcpy(pDst, "AT+CMNB=3\r\n");
 		break;
-	case AT_CMNB_CK:								//查询设置网络类型
+	case AT_CMNB_CK:							//查询设置网络类型
 		strcpy(pDst, "AT+CMNB?\r\n");
 		break;
 	case AT_CSCLK:								//开启低功耗模式
@@ -57,6 +63,7 @@ void AT_SendPacket(AT_TYPE temType, char *pDst)
 	case AT_CGDCONT:							//设置APN
 		#if JP_AT_USE
 		sprintf(pDst, "AT+CGDCONT=1,\"IP\",\"%s\"\r\n",Fs.ApnName);	
+//		sprintf(pDst, "AT+CGDCONT=1,\"IP\",\"iot.iijmobile.jp\"\r\n");	
 		#else
 		strcpy(pDst, "AT\r\n");
 		#endif
@@ -64,6 +71,7 @@ void AT_SendPacket(AT_TYPE temType, char *pDst)
 	case AT_CNCFG:								//设置APN用户名和密码
 		#if JP_AT_USE
 		sprintf(pDst, "AT+CGAUTH=1,3,\"%s\",\"%s\"\r\n",Fs.GprsUserName,Fs.GprsPassWord);	
+//		sprintf(pDst, "AT+CGAUTH=1,3,\"iot\",\"mobile@iot\"\r\n");
 		#else
 		strcpy(pDst, "AT\r\n");
 		#endif
@@ -84,6 +92,7 @@ void AT_SendPacket(AT_TYPE temType, char *pDst)
 		strcpy(pDst, "AT+CPSI?\r\n");
 		break;
 	case AT_CCID:								//驱动SIM卡CCID
+		Test.SendCheckCCID = 1;
 		strcpy(pDst, "AT+CCID\r\n");
 		break;
 	case AT_ATI:								//查询模块固件版本
@@ -144,8 +153,11 @@ void AT_SendPacket(AT_TYPE temType, char *pDst)
 		sprintf(pDst, "AT+SMCONF=\"URL\",\"device2.iotpf.mb.softbank.jp\",%s\r\n",Fs.IpPort);	
 		#elif (USR_PLAM_TYPE == 1)
 		sprintf(pDst, "AT+SMCONF=\"URL\",\"device2.iotpf.mb.softbank.jp\",%s\r\n",Fs.IpPort);	
-		#else
+		#elif(USR_PLAM_TYPE == 2)
 		sprintf(pDst, "AT+SMCONF=\"URL\",\"221.110.245.99\",%s\r\n",Fs.IpPort);	
+		#elif(USR_PLAM_TYPE == 3)
+//		sprintf(pDst, "AT+SMCONF=\"URL\",\"52.195.16.239\",8443\r\n");	
+		sprintf(pDst, "AT+SMCONF=\"URL\",\"52.195.16.239\",1883\r\n");
 		#endif
 		break;	
 	case AT_SMCONF_KEEP:						//设置保持时间
@@ -172,7 +184,9 @@ void AT_SendPacket(AT_TYPE temType, char *pDst)
 		sprintf(pDst, "AT+SMCONF=\"USERNAME\",\"C333D8962-%s\"\r\n",IMEI);
 		#elif (USR_PLAM_TYPE == 1)
 		sprintf(pDst, "AT+SMCONF=\"USERNAME\",\"CDA68B264-%s\"\r\n",IMEI);
-		#else
+		#elif(USR_PLAM_TYPE == 2)
+		sprintf(pDst, "AT+SMCONF=\"USERNAME\",\"C58D391E4-%s\"\r\n",IMEI);
+		#elif(USR_PLAM_TYPE == 3)
 		sprintf(pDst, "AT+SMCONF=\"USERNAME\",\"C58D391E4-%s\"\r\n",IMEI);
 		#endif
 		break;
@@ -204,7 +218,9 @@ void AT_SendPacket(AT_TYPE temType, char *pDst)
 		sprintf(pDst,"AT+SMPUB=\"/oneM2M/req/C333D8962-%s/CSE1000/json\",%d,1,1\r\n",IMEI,GprsDataLen);
 		#elif (USR_PLAM_TYPE == 1)
 		sprintf(pDst,"AT+SMPUB=\"/oneM2M/req/CDA68B264-%s/CSE1000/json\",%d,1,1\r\n",IMEI,GprsDataLen);
-		#else
+		#elif(USR_PLAM_TYPE == 2)
+		sprintf(pDst,"AT+SMPUB=\"/oneM2M/req/C58D391E4-%s/CSE1000/json\",%d,1,1\r\n",IMEI,GprsDataLen);
+		#elif(USR_PLAM_TYPE == 3)
 		sprintf(pDst,"AT+SMPUB=\"/oneM2M/req/C58D391E4-%s/CSE1000/json\",%d,1,1\r\n",IMEI,GprsDataLen);
 		#endif
 
@@ -219,7 +235,9 @@ void AT_SendPacket(AT_TYPE temType, char *pDst)
 		sprintf(pDst, "AT+SMSUB=\"/oneM2M/req/CSE1000/C333D8962-%s/json\",1\r\n",IMEI);
 		#elif (USR_PLAM_TYPE == 1)
 		sprintf(pDst, "AT+SMSUB=\"/oneM2M/req/CSE1000/CDA68B264-%s/json\",1\r\n",IMEI);
-		#else
+		#elif(USR_PLAM_TYPE == 2)
+		sprintf(pDst, "AT+SMSUB=\"/oneM2M/req/CSE1000/C58D391E4-%s/json\",1\r\n",IMEI);
+		#elif(USR_PLAM_TYPE == 3)
 		sprintf(pDst, "AT+SMSUB=\"/oneM2M/req/CSE1000/C58D391E4-%s/json\",1\r\n",IMEI);
 		#endif
 		break;
@@ -228,7 +246,9 @@ void AT_SendPacket(AT_TYPE temType, char *pDst)
 		sprintf(pDst, "AT+SMUNSUB=\"/oneM2M/req/CSE1000/C333D8962-%s/json\"\r\n",IMEI);
 		#elif (USR_PLAM_TYPE == 1)
 		sprintf(pDst, "AT+SMUNSUB=\"/oneM2M/req/CSE1000/CDA68B264-%s/json\"\r\n",IMEI);
-		#else
+		#elif(USR_PLAM_TYPE == 2)
+		sprintf(pDst, "AT+SMUNSUB=\"/oneM2M/req/CSE1000/C58D391E4-%s/json\"\r\n",IMEI);
+		#elif(USR_PLAM_TYPE == 3)
 		sprintf(pDst, "AT+SMUNSUB=\"/oneM2M/req/CSE1000/C58D391E4-%s/json\"\r\n",IMEI);
 		#endif
 		break;
@@ -333,6 +353,29 @@ unsigned char AT_InitReceive(AT_TYPE *temType, char *pSrc)
 		}
 		else if (*temType == AT_ATI)
 		{
+			*temType = AT_CCID;
+		}
+		else if (*temType == AT_CCID)
+		{
+			if(Test.InTesting)
+			{
+		 		*temType = AT_CMNB_2;		//如果是测试模式，将网络切换到NB
+			}
+			else
+			{
+				*temType = AT_CGDCONT;		//如果是正常模式，不进行网络设置
+			}		
+		}
+		else if (*temType == AT_CMNB_2)
+		{
+		 	*temType = AT_CFUN_0;
+		}
+		else if (*temType == AT_CFUN_0)
+		{
+		 	*temType = AT_CFUN_1;
+		}
+		else if (*temType == AT_CFUN_1)
+		{
 		 	*temType = AT_CGDCONT;
 		}
 		else if (*temType == AT_CGDCONT)
@@ -386,10 +429,6 @@ unsigned char AT_InitReceive(AT_TYPE *temType, char *pSrc)
 	
 		else if (*temType == AT_SLEDS)
 		{
-			*temType = AT_CCID;
-		}
-		else if (*temType == AT_CCID)
-		{
 			*temType = AT_CNVW;
 		}
 		else if (*temType == AT_CNVW)
@@ -401,6 +440,7 @@ unsigned char AT_InitReceive(AT_TYPE *temType, char *pSrc)
 			#endif
 			Flag.AtInitCmd = 0;
 			Flag.AtInitFinish = 1;
+			Test.SendCheckCCID = 0;
 		}
 	}
 	else if (strstr(pSrc, "ERROR"))
@@ -527,8 +567,8 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 		{
 			if (strstr(pSrc, ",1") || strstr(pSrc, ",5"))
 			{
-
-				if ((Flag.GprsConnectOk)||(ConnectDelayCnt > 0))				//如果网络连接，那只是周期性检查网络，不处理
+				//如果网络连接，那只是周期性检查网络，不处理;如果是测试模式，不进行连接服务器
+				if ((Flag.GprsConnectOk)||(ConnectDelayCnt > 0) || Test.InTesting)				
 				{
 					*temType = AT_NULL;
 				}
@@ -1211,6 +1251,7 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 	case AT_GSN:
 		if (strstr(pSrc, "OK"))
 		{
+		#if 0
 			ptem = strstr(pSrc,"\r\n");
 			if(ptem != NULL)
 			{
@@ -1239,7 +1280,7 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 					}
 				}
 			}
-
+		#endif
 			*temType = AT_NULL;		
 			back = 1;
 		}
@@ -1273,9 +1314,29 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 				CsqValue[0] = '-';
 				Itoa(i, CsqValue + 1);
 				strcat(CsqValue, "dBm");
-				Test.GetGsmCsq = 1;
+
+				//测试模式下，还没有完成切换时才执行切换
+				if(Test.InTesting && !Test.HaveChanegNet)	
+				{
+					memset(Test.CsqValue,0,sizeof(Test.CsqValue));
+					strcpy((char *)Test.CsqValue,CsqValue);
+
+					Test.GetGsmCsq = 1;
+					Test.NeedChangeNet = 1;
+				}
 			}
-			*temType = AT_NULL;
+
+			if(Test.NeedChangeNet)
+			{
+				//测试模式下，网络切换到NB网络，RF测试完成后，需要切换到双模
+				Test.NeedChangeNet = 0;
+				*temType = AT_CMNB_3;		
+			}
+			else
+			{
+				*temType = AT_NULL;
+			}
+			
 			back = 1;
 		}
 		else if (strstr(pSrc, "OK") || strstr(pSrc, "ERROR"))
@@ -1285,6 +1346,54 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 		}
 
 		break;
+
+	case AT_CMNB_CHECK:	
+		if (strstr(pSrc, "+CMNB:"))
+		{
+			p1 = strstr(pSrc, "+CMNB:");
+			p1 += 7;
+			if(*p1 != '3')
+			{
+				Flag.NeedChangeNet = 1;
+			}	
+			*temType = AT_NULL;		//设置完成之后需要通过进出一下飞行模式生效
+			AtDelayCnt = 0;
+			back = 1;
+		}
+		break;
+
+	case AT_CMNB_3:
+		if (strstr(pSrc, "OK"))
+		{
+			*temType = AT_CFUN_0;		//设置完成之后需要通过进出一下飞行模式生效
+			AtDelayCnt = 0;
+			back = 1;
+		}
+
+		break;
+
+	case AT_CFUN_0:
+		if (strstr(pSrc, "OK"))
+		{
+			*temType = AT_CFUN_1;
+			AtDelayCnt = 0;
+			back = 1;
+		}
+
+		break;
+
+	case AT_CFUN_1:
+		if (strstr(pSrc, "OK"))
+		{
+			Test.HaveChanegNet = 1;
+
+			*temType = AT_NULL;
+			AtDelayCnt = 0;
+			back = 1;
+		}
+
+		break;
+
 	case AT_ATE:
 		if (strstr(pSrc, "OK") || strstr(pSrc, "ERROR"))
 		{
@@ -1304,19 +1413,6 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 		}
 		break;
 
-	case AT_CMNB_3:
-		if(strstr(pSrc, "OK"))
-		{
-			*temType = AT_CNDS_CK;
-		}
-		else 
-		{
-			*temType = AT_NULL;
-		}
-		AtDelayCnt = 0;
-		back = 1;
-		
-		break;
 
 	case AT_CMNB_CK:
 		if(strstr(pSrc, "+CMNB: 3"))
@@ -1496,6 +1592,20 @@ void Flag_check(void)
 		return;
 	}
 
+	if(Flag.NeedChangeNet)
+	{
+		Flag.NeedChangeNet = 0;
+		AtType = AT_CMNB_3;
+		return;
+	}
+
+	if(Flag.NeedCheckNet && !Test.InTesting)
+	{
+		Flag.NeedCheckNet = 0;
+		AtType = AT_CMNB_CHECK;
+		return;
+	}
+	
 	if (Flag.NeedCloseGprs)
 	{
 		Flag.NeedCloseGprs = 0;
