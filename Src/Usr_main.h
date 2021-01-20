@@ -230,6 +230,7 @@ typedef struct FLAG_
 	unsigned char BtPowerOn:1;					//蓝牙开关机状态，1为开机，0为关机
 	unsigned char NeedChangeNet:1;				//需要将网络切换到双模
 	unsigned char NeedCheckNet:1;				//需要查询网络
+	unsigned char AdcInitOk:1;					//ADC初始化成功
 }FLAG;
 #endif
 

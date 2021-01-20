@@ -145,6 +145,11 @@ void TIMER_SecCntHandle(void)
 		}
 	}
 
+	if(Test.WaitCcidCnt > 0)
+	{
+		Test.WaitCcidCnt --;
+	}
+
 	if(WaitRestart > 0)
 	{
 		WaitRestart --;
@@ -366,7 +371,10 @@ void TIMER_SecCntHandle(void)
 		}
 	}
 	
-
+	if(ADC_TimeOut_Cnt > 0)
+	{
+		ADC_TimeOut_Cnt --;
+	}
 
 	if (ResetLeftCnt > 0)
 	{

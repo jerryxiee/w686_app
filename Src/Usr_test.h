@@ -30,10 +30,15 @@ typedef struct{
     unsigned char   SendCheckCCID:1;    //模块发送了CCID的指令，用于在初始化阶段提取ICCID
     unsigned char   NeedChangeNet:1;    //在RF网络测试结束后，需要切换回双模
     unsigned char   HaveChanegNet:1;    //在RF网络测试结束后，切换回双模完成
+    unsigned char   NeedAckWriteImei:1; //需要应答IMEI写入请求
+    unsigned char   NeedAckReadImei:1;  //需要应答IMEI写入请求
+    unsigned char   HaveGetBtMac:1;     //需要获取蓝牙mac地址
+    unsigned char   HaveGetBtScan:1;    //需要获取蓝牙扫描结果
 
+    unsigned char   CsqGetCnt;          //检测到csq有效次数，用于排除首次csq信号不好造成的影响
     unsigned char   WaitTestCnt;        //Test_Handle执行周期
 	unsigned char 	WaitEnterTest;		//开机后等待外部发送指令进入测试模式的窗口时间
-    unsigned char 	WaitRiAction;		//等待
+    unsigned char 	WaitCcidCnt;		//等待获取ccid计时
 	unsigned char 	TestStep;			//测试到哪一步，这个值需要初始化为0xFF
     unsigned char   TestOverStep;       //测试完成到哪一步，配合TestStep来实现不重复发送测试结果
     unsigned char   ShowResultCnt;      //通过LED灯显示测试结果保持时间

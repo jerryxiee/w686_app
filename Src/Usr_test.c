@@ -4,11 +4,14 @@ TEST Test;
 TEST_RESULT Test_Result;
 TEST_RESULT Test_Result_Read;
 
+uint8_t Test_Get_Mac[6]    = {0x59,0x01,0x00,0x41,0xD5,0x6F};
+uint8_t Test_Get_Scan[6]   = {0x59,0x01,0x00,0x42,0xB6,0x5F};
+
 void Test_Init(void)
 {
     Test.TestStep = 0xFF;
-    Test.WaitEnterTest = 15;
-    UART_Send(USART3,"Device can enter Test mode by send Test command in 10s\r\n",56);
+    Test.WaitEnterTest = 20;
+    UART_Send(USART3,"Device can enter Test mode by send Test command in 20s\r\n",56);
 }
 
 u8 Updata_TestResult(void)
@@ -73,8 +76,13 @@ void Test_Receive(void)
             EXFLASH_ReadBuffer((u8 *)&Test_Result,TESTRESULTADDR_0,sizeof(Test_Result));
             p1 = strstr(Test_Result.GetAll, "\r\n");
             *p1 = 0; 
-            sprintf(send_buf,"^DEV@SETIMEI=%s;%s\r\n",temp_buf,Test_Result.GetAll);
-            UART_Send(USART3,(u8 *)send_buf,strlen(send_buf));        
+        
+            if((Test.GetGsmCCID == 0) && (Test.NeedAckReadImei == 0))
+            {
+                Test.WaitCcidCnt = 15;   
+            }
+
+            Test.NeedAckWriteImei = 1;  
         }   
         else
         {
@@ -92,9 +100,13 @@ void Test_Receive(void)
  
         p1 = strstr(Test_Result.GetAll, "\r\n");
         *p1 = 0;
+ 
+        if((Test.GetGsmCCID == 0) && (Test.NeedAckReadImei == 0))
+        {
+            Test.WaitCcidCnt = 15;   
+        }
 
-        sprintf(send_buf,"^DEV@SETIMEI=%s;%s\r\n",read_buf,Test_Result.GetAll);
-        UART_Send(USART3,(u8 *)send_buf,strlen(send_buf)); 
+        Test.NeedAckReadImei = 1; 
     }
 
     if(Test.TestStep == 0xFF)      
@@ -128,8 +140,8 @@ void Test_Receive(void)
             memset(Test_Result.Get1,0,sizeof(Test_Result.Get1));
             memset(Test_Result.GetAll,0,sizeof(Test_Result.GetAll));
             strncpy(Test_Result.Get1,p0,p1 - p0);
-            sprintf(Test_Result.GetAll,"IMEI=%s;ATI=%s;CCID=%s;GET0=%s;GET2=%s;GET3=%s;DEVSW=%s;BTMAC=%s\r\n",\
-            IMEI_MODULE,GsmRev,CCID,Test_Result.Get0,Test_Result.Get2,Test_Result.Get3,Edition_STD,Bt_Info);
+            sprintf(Test_Result.GetAll,"IMEI=%s;ATI=%s;GET0=%s;GET2=%s;GET3=%s;DEVSW=%s;BTMAC=%s\r\n",\
+            IMEI_MODULE,GsmRev,Test_Result.Get0,Test_Result.Get2,Test_Result.Get3,Edition_STD,Bt_Info);
             if( Updata_TestResult() )
             {
                 sprintf(send_buf,"^DEV@SET1=%s\r\n",Test_Result.Get1);
@@ -214,6 +226,8 @@ void Test_Receive(void)
         p0 += 8;
         step = (u8)atoi(p0);
 
+        Test.TestOverStep = 0;
+
         switch (step)
         {
          case 1:
@@ -264,10 +278,27 @@ void Test_Handle(void)
 
     memset(SendDataTemp,0,sizeof(SendDataTemp));
 
+    if(Test.NeedAckWriteImei && (Test.GetGsmCCID || Test.WaitCcidCnt == 0))
+    {
+        Test.NeedAckWriteImei = 0;
+        EXFLASH_ReadBuffer((u8 *)read_buf,IMEIADDR,15);
+        sprintf(SendDataTemp,"^DEV@SETIMEI=%s;%s;CCID=%s\r\n",read_buf,Test_Result.GetAll,CCID);
+        UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp)); 
+    }
+
+    if(Test.NeedAckReadImei && (Test.GetGsmCCID || Test.WaitCcidCnt == 0))
+    {
+        Test.NeedAckReadImei = 0;
+        EXFLASH_ReadBuffer((u8 *)read_buf,IMEIADDR,15);
+        sprintf(SendDataTemp,"^DEV@SETIMEI=%s;%s;CCID=%s\r\n",read_buf,Test_Result.GetAll,CCID);
+        UART_Send(USART3,(u8 *)SendDataTemp,strlen(SendDataTemp)); 
+    }
+
     if((Test.WaitTestCnt > 0) || (Test.TestOver))
     {
         return;
     }
+
     Test.WaitTestCnt = 10;
 
     if(Test.TestOverStep != Test.TestStep)
@@ -416,12 +447,24 @@ void Test_Handle(void)
             Test.ExflashTestOk = 1;
         }
         EXFLASH_EraseSector(0x00020000);
-        return;
     }
 
     if(Test.TestStep == 0)
 	{
 		UART_Send(USART3,"^NOTE@T0=?\r\n",12);
+        return;
 	}
+
+    if(!Test.HaveGetBtMac)
+    {
+        UART_Send(USART4,Test_Get_Mac,sizeof(Test_Get_Mac));
+        return;
+    }
+
+    if(!Test.HaveGetBtScan)
+    {
+        UART_Send(USART4,Test_Get_Scan,sizeof(Test_Get_Scan));
+        return;
+    }
 }
 

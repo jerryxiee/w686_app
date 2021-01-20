@@ -17,7 +17,7 @@ unsigned char CheckModeCnt;		//模块开机后，等待主动上报内容，超�
 const unsigned char SoftwareBuilt[50] = {0};
 char Edition[50] = {0};
 
-char Edition_STD[50] = {"W686AIB_V1.0.1"};				//程序的稳定版本，手动设置版本型号
+char Edition_STD[50] = {"W686AIB_V1.0.2_T06"};				//程序的稳定版本，手动设置版本型号
 //char Edition_STD[50] = {"W686AIB_V0.0.1_T29_suzhou_IIJ"};
 char HardWare_Edition[50] = {"TY197_MAIN_V2.0"};		//硬件版本，手动设置版本型号
 
@@ -94,6 +94,7 @@ void Usr_InitHardware(void)
 	EXFLASH_SpiInit();
 	Sensor_Init();	
 	Adc_init();
+//	MX_Adc_init();
 //	Flooding_sensor_init();
 }
 
@@ -194,7 +195,7 @@ void Flag_Check(void)
 		}
 	}
 
-	if(Flag.NeedGetBatVoltage)
+	if(Flag.NeedGetBatVoltage && Flag.AdcInitOk)
 	{
 		static u8 lowbatcnt = 0;
 		static u8 lowbatalarmcnt = 0;

@@ -29,16 +29,18 @@ typedef enum{
 #define NO_SLEEP		1
 
 #if USR_FOR_JP
+//	#define IMEI_MANUAL	    "860016040087616"
 	#define IMEI_MANUAL	    ""
 	#define JP_AT_USE		1
 	#define USE_SOFTSIM		0
 	#define USR_PLAM_TYPE	0		//0,是量产服务器，1是标准服务器，2是使用测试服务器, 3是使用苏州服务器
+	#define NET_TYPE		1		//网络类型，1是cat-m1;2是NB;3是cat-m1和NB双模
 #else
 	#define IMEI_MANUAL	"999999999999999"
 //	#define IMEI_MANUAL	""
 	#define USE_SOFTSIM		0
-	#define USR_PLAM_TYPE		2		//使用测试服
-
+	#define USR_PLAM_TYPE	2		//使用测试服
+	#define NET_TYPE		2
 #endif
 
 #ifndef _GPRS_SEND

@@ -504,6 +504,7 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 
 				Flag.HaveGetCCID = 1;
 				Test.GetGsmCCID = 1;
+				Test.WaitCcidCnt = 0;
 			}
 		}
 
@@ -1314,9 +1315,9 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 				CsqValue[0] = '-';
 				Itoa(i, CsqValue + 1);
 				strcat(CsqValue, "dBm");
-
-				//测试模式下，还没有完成切换时才执行切换
-				if(Test.InTesting && !Test.HaveChanegNet)	
+				Test.CsqGetCnt ++;
+				//测试模式下，在信号强度大于22或者连续采样三次后才认为采样到了稳定的信号值
+				if(Test.InTesting && !Test.HaveChanegNet && (Rssi > 22 || Test.CsqGetCnt >= 3))	
 				{
 					memset(Test.CsqValue,0,sizeof(Test.CsqValue));
 					strcpy((char *)Test.CsqValue,CsqValue);
@@ -1352,7 +1353,13 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 		{
 			p1 = strstr(pSrc, "+CMNB:");
 			p1 += 7;
+		#if (NET_TYPE == 1)
+			if(*p1 != '1')
+		#elif (NET_TYPE == 2)
+			if(*p1 != '2')
+		#else
 			if(*p1 != '3')
+		#endif
 			{
 				Flag.NeedChangeNet = 1;
 			}	
@@ -1360,6 +1367,26 @@ unsigned char AT_Receive(AT_TYPE *temType, char *pSrc)
 			AtDelayCnt = 0;
 			back = 1;
 		}
+		break;
+
+	case AT_CMNB_1:
+		if (strstr(pSrc, "OK"))
+		{
+			*temType = AT_CFUN_0;		//设置完成之后需要通过进出一下飞行模式生效
+			AtDelayCnt = 0;
+			back = 1;
+		}
+
+		break;
+
+	case AT_CMNB_2:
+		if (strstr(pSrc, "OK"))
+		{
+			*temType = AT_CFUN_0;		//设置完成之后需要通过进出一下飞行模式生效
+			AtDelayCnt = 0;
+			back = 1;
+		}
+
 		break;
 
 	case AT_CMNB_3:
@@ -1595,7 +1622,15 @@ void Flag_check(void)
 	if(Flag.NeedChangeNet)
 	{
 		Flag.NeedChangeNet = 0;
+
+	#if (NET_TYPE == 1)
+		AtType = AT_CMNB_1;
+	#elif (NET_TYPE == 2)
+		AtType = AT_CMNB_2;
+	#else
 		AtType = AT_CMNB_3;
+	#endif	
+
 		return;
 	}
 

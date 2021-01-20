@@ -648,6 +648,8 @@ void Bt_Mac_Transform(char *pSrc, char *pDst, u16 len)
 	}
 }
 
+char debug_buf[500] = {0};
+
 void BT_Data_Receive(char *pSrc)
 {
 	char   *p0 = NULL;
@@ -655,6 +657,7 @@ void BT_Data_Receive(char *pSrc)
 	u16	 data_len = 0;
 
 	p0 = pSrc;
+	memset(debug_buf,0,sizeof(debug_buf));
 
 	//蓝牙串口起始字节合法性判断
 	if((*p0 != 0x51) && (*p0 != 0x59))
@@ -676,9 +679,16 @@ void BT_Data_Receive(char *pSrc)
 
 			memset(Bt_Info,0,sizeof(Bt_Info));
 			Bt_Mac_Transform(p0,Bt_Info,6);		//转换mac地址为字符串
+
+			sprintf(debug_buf,"Recive the BT mac address is:%s\r\n",Bt_Info);
+			UART_Send(USART3,(u8 *)debug_buf,strlen(debug_buf));
+			printf("Have revice the BT mac address: %s\r\n",Bt_Info);
+
 			p0 += 6;
 		    strcat(Bt_Info,";BTSW=");
 			memcpy(&Bt_Info[18],p0,data_len - 7);
+
+			Test.HaveGetBtMac = 1;
 			break;
 
 		case 0x42:
@@ -686,7 +696,13 @@ void BT_Data_Receive(char *pSrc)
 
 			memset(Scan_Mac,0,sizeof(Scan_Mac));
 			Bt_Mac_Transform(p0,Scan_Mac,data_len - 1);
+
+			sprintf(debug_buf,"Scan the BT mac address is:%s\r\n",Scan_Mac);
+			UART_Send(USART3,(u8 *)debug_buf,strlen(debug_buf));
+			printf("Have revice the BT scan address: %s\r\n",Scan_Mac);
+			
 			Test.GetBtInfo = 1;
+			Test.HaveGetBtScan = 1;
 			break;	
 
 		default:

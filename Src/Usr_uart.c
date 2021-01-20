@@ -141,7 +141,8 @@ void At_Receive(void)
 		}
 	}
 
-	if(strstr(Uart1Buf,"+CPIN: READY")||Flag.SendAtWithoutRDY)
+	//追加：在测试模式下时，PCB测试是不装SIM卡测试，所以CPIN应答结果是ERROR，为了尽快开始测试，这里增加这一开始条件
+	if(strstr(Uart1Buf,"+CPIN: READY")||Flag.SendAtWithoutRDY ||(Test.InTesting && strstr(Uart1Buf,"ERROR")))
 	{
 	    Flag.SendAtWithoutRDY=0;
 		Flag.WaitAtAck = 0;
@@ -163,7 +164,7 @@ void At_Receive(void)
 		Flag.NoSimCard = 1;
 	}
 
-	if (strstr(Uart1Buf, "OK") )
+	if (strstr(Uart1Buf, "OK") || strstr(Uart1Buf, "ERROR"))
 	{
 		Flag.RcvAtAckOK = 1;
 	}

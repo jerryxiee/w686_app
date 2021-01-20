@@ -478,8 +478,8 @@ void GPRS_Send_Handle(void)
 //定位包保存
 void GPRS_SaveBreakPoint(void)
 {
-
-	if ((Flag.GprsConnectOk == 0 || Flag.PsSignalOk == 0) && Flag.ReadySaveBreak && GprsSend.posCnt > 0)
+	//测试阶段不存断点
+	if ((Flag.GprsConnectOk == 0 || Flag.PsSignalOk == 0) && Flag.ReadySaveBreak && GprsSend.posCnt > 0 && !Test.TestOver)
 	{
 		Flag.ReadySaveBreak = 0;
 
