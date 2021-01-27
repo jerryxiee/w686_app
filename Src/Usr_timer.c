@@ -135,6 +135,7 @@ void TIMER_SecCntHandle(void)
 		}
 	}
 
+	Flag.NeedSendSensorToBt = 1;
 
 	if(Test.WaitEnterTest > 0)
 	{
@@ -148,6 +149,11 @@ void TIMER_SecCntHandle(void)
 	if(Test.WaitCcidCnt > 0)
 	{
 		Test.WaitCcidCnt --;
+	}
+
+	if(WaitBtCnt > 0)
+	{
+		WaitBtCnt --;
 	}
 
 	if(WaitRestart > 0)
@@ -257,7 +263,7 @@ void TIMER_SecCntHandle(void)
 	{
 		Flag.NeedCheckCO2Value = 1;
 		Flag.NeedCheckSHT3XSensor = 1;
-		Flag.NeedCheckCCS811Value = 1;
+//		Flag.NeedCheckCCS811Value = 1;
 
 		//如果没有检测到传感器，尝试重新检测
 		if((sensor_type == 0)||(sensor_type == 0xFE))

@@ -455,6 +455,12 @@ void Test_Handle(void)
         return;
 	}
 
+    //在非测试模式下时，不执行下面任务
+    if(!Test.InTesting)
+    {
+        return;
+    }
+
     if(!Test.HaveGetBtMac)
     {
         UART_Send(USART4,Test_Get_Mac,sizeof(Test_Get_Mac));

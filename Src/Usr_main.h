@@ -227,6 +227,8 @@ typedef struct FLAG_
 	unsigned char NeedDownLoadBtFile:1;			//需要从服务器下载nrf52的升级文件
 	unsigned char NeedBtPowerOn:1;				//需要蓝牙开机
 	unsigned char NeedBtPowerOff:1;				//需要蓝牙关机
+	unsigned char NeedSendSensorToBt:1;			//需要向蓝牙发送传感器数据
+	unsigned char NeedSendImeiToBt:1;			//需要向蓝牙发送IMEI号
 	unsigned char BtPowerOn:1;					//蓝牙开关机状态，1为开机，0为关机
 	unsigned char NeedChangeNet:1;				//需要将网络切换到双模
 	unsigned char NeedCheckNet:1;				//需要查询网络

@@ -63,15 +63,13 @@ void AT_SendPacket(AT_TYPE temType, char *pDst)
 	case AT_CGDCONT:							//设置APN
 		#if JP_AT_USE
 		sprintf(pDst, "AT+CGDCONT=1,\"IP\",\"%s\"\r\n",Fs.ApnName);	
-//		sprintf(pDst, "AT+CGDCONT=1,\"IP\",\"iot.iijmobile.jp\"\r\n");	
 		#else
 		strcpy(pDst, "AT\r\n");
 		#endif
 		break;
 	case AT_CNCFG:								//设置APN用户名和密码
 		#if JP_AT_USE
-		sprintf(pDst, "AT+CGAUTH=1,3,\"%s\",\"%s\"\r\n",Fs.GprsUserName,Fs.GprsPassWord);	
-//		sprintf(pDst, "AT+CGAUTH=1,3,\"iot\",\"mobile@iot\"\r\n");
+		sprintf(pDst, "AT+CGAUTH=1,3,\"%s\",\"%s\"\r\n",Fs.GprsPassWord,Fs.GprsUserName);	
 		#else
 		strcpy(pDst, "AT\r\n");
 		#endif

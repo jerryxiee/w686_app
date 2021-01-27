@@ -84,15 +84,22 @@ static void FS_FactroyValue(void)
 
 	strcpy(Fs.IpPort, "8883"); 
 	strcpy(Fs.IpAdress, "device2.iotpf.mb.softbank.jp");
+#if 1
 	strcpy(Fs.ApnName, "mtc.gen");  
 	strcpy(Fs.GprsUserName, "mtc"); 
 	strcpy(Fs.GprsPassWord, "mtc"); 
+#else
+	strcpy(Fs.ApnName, "sb.mvno");  
+//	strcpy(Fs.ApnName, "dm.jplat.net"); 
+	strcpy(Fs.GprsUserName, "his@his"); 
+	strcpy(Fs.GprsPassWord, "his"); 
+#endif
 
 	Fs.BKSavedCnt = 0;
 	Fs.BkSendCnt = 0;
 	Fs.BkSendLen = 0;
 	Fs.Interval = 300;
-	Fs.SensorCkInterval = 5;
+	Fs.SensorCkInterval = 1;
 	Fs.HaveSetApn = 0;
 	Fs.Sensor = 4;
 	Fs.FotaSwitch = 0x01;

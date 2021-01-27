@@ -32,7 +32,7 @@ void Sensor_Init(void)
         
     CO2_POWER_EN_SET;           //开启二氧化碳传感器供电
  //   CO2_POWER_EN_RESET;           //开启二氧化碳传感器供电
-    SHT31_POWER_EN_RESET;       //开启SHT31和CCS811传感器供电
+    SHT31_POWER_EN_SET;       //开启SHT31和CCS811传感器供电
     CCS811_WAKE_RESET;
 
     LL_mDelay(100);
@@ -407,9 +407,9 @@ void Read_SHT31_Data(void)
         {
             Flag.SHT3xSensorError = 1;
             printf("SHT31 sensor data error over 10 times, need reset sensor!\r\n");
-            SHT31_POWER_EN_SET;         //关闭温湿度传感器电源
+            SHT31_POWER_EN_RESET;         //关闭温湿度传感器电源
             LL_mDelay(1000);
-            SHT31_POWER_EN_RESET;       //开启温湿度传感器电源
+            SHT31_POWER_EN_SET;       //开启温湿度传感器电源
             data_error_cnt = 0;
         }
     }

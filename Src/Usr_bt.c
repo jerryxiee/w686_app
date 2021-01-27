@@ -26,7 +26,11 @@ u8 Ready_Send_Data_Fw[7] 	= {0x01,0x02,0x00,0x10,0x00,0x00,0xC0};
 
 BT_TYPE 	BtType; 
 BTDFU_INFO 	BtDfu_Info;
-u8 			Bt_SendBuf[150];               //蓝牙发送数据buf
+u8 			Bt_SendBuf[150];    //蓝牙发送数据buf
+u8 			WaitBtCnt;			//蓝牙开机后，等待一段时间，等蓝牙准备好再开始发送数据
+
+unsigned short CRC16_XMODEM(unsigned char *puchMsg, unsigned int usDataLen);
+
 
 //小端模式的数组的两个成员变量整合成16进制数据
 static u16 get_u16_le(u8* p_data)
@@ -458,6 +462,7 @@ void BT_Dfu_Receive(BT_TYPE *temType, char *pSrc)
 				if(BtDfu_Info.SendFileOver)
 				{
 					*temType = BT_NULL;
+					BtDfu_Info.InDfu = 0;
 					printf("\r\n--------------------> DFU file send Fished <--------------------\r\n");
 				}
 			}
@@ -543,6 +548,7 @@ void Bt_Handle(void)
 		Flag.BtPowerOn = 1;
 		BT_POWER_EN_SET;
 		Usr_USART4_UART_Init();
+		WaitBtCnt = 3;
 		return;
 	}
 
@@ -624,7 +630,72 @@ void Bt_Handle(void)
 	{
 		BtDfu_Info.DfuFailed = 0;
 		printf("Nrf52 Dfu failed\r\n");
+		return;
 	}
+
+	//以下操作，在蓝牙升级过程中,或者蓝牙没开机,或者蓝牙刚开机时不执行
+	if(BtDfu_Info.InDfu || !Flag.BtPowerOn || WaitBtCnt)	
+	{
+		return;
+	}
+
+	if(Flag.NeedSendImeiToBt && (IMEI[0] != 0))
+	{
+		u8 i = 0;
+		u16	data_temp = 0;
+		u8 imei_data[21] = {0x59,0x00,0x01,0x44};
+
+		Flag.NeedSendImeiToBt = 0;
+
+		//填充IMEI
+		for(i = 0; i < 15; i ++)
+		{
+			imei_data[i + 4] = IMEI[i];
+		}
+
+		//校验数值填充
+		data_temp = CRC16_XMODEM(&imei_data[1],18);
+		imei_data[19] = (u8)(data_temp & 0x00FF);
+		imei_data[20] = (u8)((data_temp & 0xFF00) >> 8);
+
+		UART_Send(USART4,imei_data,sizeof(imei_data));
+
+		return;
+	}
+
+	//向蓝牙周期性发送传感器数据
+	if(Flag.NeedSendSensorToBt)
+	{
+		u16	data_temp = 0;
+		u8 sensor_data[12] = {0x59,0x07,0x00,0x43,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+
+		Flag.NeedSendSensorToBt = 0;
+
+		//二氧化碳数值填充
+		data_temp = co2_module_value;
+		sensor_data[4] = (u8)(data_temp & 0x00FF);
+		sensor_data[5] = (u8)((data_temp & 0xFF00) >> 8);
+
+		//温度数值填充
+		data_temp = (u16)(temperature_value*10);
+		sensor_data[6] = (u8)(data_temp & 0x00FF);
+		sensor_data[7] = (u8)((data_temp & 0xFF00) >> 8);	
+
+		//湿度数值填充
+		data_temp = (u16)(humidity_value*10);
+		sensor_data[8] = (u8)(data_temp & 0x00FF);
+		sensor_data[9] = (u8)((data_temp & 0xFF00) >> 8);	
+
+		//校验数值填充
+		data_temp = CRC16_XMODEM(&sensor_data[1],8);
+		sensor_data[10] = (u8)(data_temp & 0x00FF);
+		sensor_data[11] = (u8)((data_temp & 0xFF00) >> 8);
+
+		UART_Send(USART4,sensor_data,sizeof(sensor_data));
+
+		return;
+	}
+
 
 }
 
@@ -710,3 +781,28 @@ void BT_Data_Receive(char *pSrc)
 	}
 }
 
+unsigned short CRC16_XMODEM(unsigned char *puchMsg, unsigned int usDataLen)  
+{  
+    unsigned short wCRCin = 0x0000;  
+    unsigned short wCPoly = 0x1021;  
+    unsigned char wChar = 0;  
+     
+    while (usDataLen--)     
+    {  
+        wChar = *(puchMsg++);  
+        wCRCin ^= (wChar << 8);
+         
+        for(int i = 0; i < 8; i++)  
+        {  
+            if(wCRCin & 0x8000)  
+            {
+                wCRCin = (wCRCin << 1) ^ wCPoly;  
+            }
+            else
+            {              
+                wCRCin = wCRCin << 1;
+            }
+        }  
+    }  
+    return (wCRCin) ;  
+}

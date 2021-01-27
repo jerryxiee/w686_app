@@ -61,6 +61,7 @@ extern BT_TYPE 		BtType;
 extern BTDFU_INFO 	BtDfu_Info;
 extern char 		Bt_Info[50];			
 extern char 		Scan_Mac[400];
+extern u8 			WaitBtCnt;
 
 u16 BT_SendPacket(BT_TYPE temType, char *pDst);
 void BT_Dfu_Receive(BT_TYPE *temType, char *pSrc);

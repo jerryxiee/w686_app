@@ -24,7 +24,7 @@ void Usr_ModuleGoSleep(void)
 	LED_NET_GREEN_OFF;
 	LED_NET_RED_OFF;
 	MODULE_WAKEUP_RESET;
-	SHT31_POWER_EN_SET;
+	SHT31_POWER_EN_RESET;
 
 	printf("\r\nsystem sleep!\r\n");
 	LL_mDelay(100);		//留一个时间窗口给串口打印数据
