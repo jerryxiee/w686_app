@@ -202,23 +202,62 @@ void FS_InitValue(void)
 		Flag.NeedUpdateFs = 1;
 	}
 
-	printf("\r\n------Device parameters as follows:------\r\n\r\n");
-	#if USR_FOR_JP
-	printf("Device suitable for Japan\r\n\r\n");
+	//设置升级服务器域名和端口
+	memset(FsUpg.AppIpAdress,0,sizeof(FsUpg.AppIpAdress));
+	#if (USR_PLAM_TYPE == 0)
+	strcpy(FsUpg.AppIpAdress,"http://fota.mamoair.net:80");			//正式服务器
 	#else
-	printf("Device suitable for China\r\n\r\n");
+	strcpy(FsUpg.AppIpAdress,"http://stg-fota.mamoair.net:80");		//测试服务器
 	#endif
+
+
+	printf("\r\n-------------Device parameters as follows:-------------\r\n\r\n");
+#if USR_FOR_JP
+//	printf("Device suitable for Japan\r\n\r\n");
+#else
+	printf(">>>>>>>> WARNING:Device suitable for China <<<<<<<<\r\n\r\n");
+#endif
+
+#if (USR_PLAM_TYPE == 0)
 	printf("Device IMEI:             %s\r\n",Fs.DeviceImei);
-	printf("Fs.IpAdress:             %s\r\n",Fs.IpAdress);
+	printf("Fs.IpAdress:             device2.iotpf.mb.softbank.jp\r\n");
 	printf("Fs.IpPort:               %s\r\n",Fs.IpPort);
-	printf("Fs.ApnName: 	           %s\r\n",Fs.ApnName);
+	printf("Device TypeCode:         C333D8962-\r\n");
+	printf("Connect Password:        YN96rc4so&oePF8-Y\r\n");
+#elif(USR_PLAM_TYPE == 1)
+//	printf("------> WARNING:Device type is TEST server type <------\r\n\r\n");
+	printf("Device IMEI:             %s\r\n",Fs.DeviceImei);
+	printf("Fs.IpAdress:             device2.iotpf.mb.softbank.jp\r\n");
+	printf("Fs.IpPort:               %s\r\n",Fs.IpPort);
+	printf("Device TypeCode:         CDA68B264-\r\n");
+	printf("Connect Password:        UjvJri4-48fYPAjL#\r\n");
+#elif(USR_PLAM_TYPE == 2)
+//	printf("------> WARNING:Sevice address not Standard server <------\r\n\r\n");
+	printf("Device IMEI:             %s\r\n",Fs.DeviceImei);
+	printf("Fs.IpAdress:             221.110.245.99\r\n");
+	printf("Fs.IpPort:               %s\r\n",Fs.IpPort);
+	printf("Device TypeCode:         C58D391E4-\r\n");
+	printf("Connect Password:        UjvJri4-48fYPAjL#\r\n");
+#elif(USR_PLAM_TYPE == 3)
+//	printf("------> WARNING:Sevice address not Standard server <------\r\n\r\n");
+	printf("Device IMEI:             %s\r\n",Fs.DeviceImei);
+	printf("Fs.IpAdress:             52.195.16.239\r\n");
+	printf("Fs.IpPort:               1883\r\n");
+	printf("Device TypeCode:         C58D391E4-\r\n");
+	printf("Connect Password:        UjvJri4-48fYPAjL#\r\n");
+#endif
+	
+	printf("Fs.ApnName:              %s\r\n",Fs.ApnName);
 	printf("Fs.GprsUserName:         %s\r\n",Fs.GprsUserName);
 	printf("Fs.GprsPassWord:         %s\r\n",Fs.GprsPassWord);
 	printf("Fs.Co2WarnThreshold:     %d\r\n",Fs.Co2WarnThreshold);
 	printf("Fs.Co2AlarmThreshold: 	 %d\r\n",Fs.Co2AlarmThreshold);
 	printf("Fs.SensorCkInterval:     %d\r\n",Fs.SensorCkInterval);
 	printf("Fs.AutoCalibrateState:   0x%x\r\n",Fs.AutoCalibrateState);
-	printf("\r\n-----------------------------------------\r\n");
+	printf("Foat Address:            %s\r\n",FsUpg.AppIpAdress);
+	printf("Fix temperature:         tem-7.5\r\n",Fs.AutoCalibrateState);
+	printf("Fix humidity:            10^(7.5*(tem)/(tem+237.3))*hum/10^(7.5*(tem+(0.05*tem-9.5))/(tem+(0.05*tem-9.5)+237.3))\r\n");	
+	printf("\r\n-------------------------------------------------------\r\n\r\n");
 }
 
 void FS_UpdateValue(void)

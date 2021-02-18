@@ -674,12 +674,16 @@ void WIRELESS_GprsReceive(char *pSrc, u16 len)
 				memset(Md5FileAsc,0,sizeof(Md5FileAsc));
 				memcpy(Md5FileAsc,p0,32);
 
+#if 1
 				//设置升级服务器域名和端口
 				memset(FsUpg.AppIpAdress,0,sizeof(FsUpg.AppIpAdress));
-//				strcpy(FsUpg.AppIpAdress,"http://stg-fota.mamosearch.com:80");		//最早的测试服
-//				strcpy(FsUpg.AppIpAdress,"http://fota.mamoair.net:80");			//正式服务器
-				strcpy(FsUpg.AppIpAdress,"http://stg-fota.mamoair.net:80");		//中间一版测试服务器
 
+			#if (USR_PLAM_TYPE == 0)
+				strcpy(FsUpg.AppIpAdress,"http://fota.mamoair.net:80");			//正式服务器
+			#else		
+				strcpy(FsUpg.AppIpAdress,"http://stg-fota.mamoair.net:80");		//中间一版测试服务器
+			#endif
+#endif
 				MD5Init(&Upgmd5);  					//初始化MD5
 
 				if(fota_type == '4')

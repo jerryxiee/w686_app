@@ -338,9 +338,12 @@ void Read_SHT31_Data(void)
     uint16_t t_sample = 0;
     uint16_t rh_sample = 0;
     float temperature_value_temp = 0;          
-    float humidity_value_temp = 0;             
+    float humidity_value_temp = 0;    
+    float humidity_value_Fix = 0;   
+    float tem = 0;       
     static uint8_t data_error_cnt = 0;  //检测数据出连续错次数
-    char debug[50] = {0};           //在使用RTT打印浮点数输出时会有bug，需要转换一下在打印
+    static u16  print_cnt= 0;           //用于指定周期打印数据
+    char debug[100] = {0};           //在使用RTT打印浮点数输出时会有bug，需要转换一下在打印
 
     I2C_Master_Read(SHT31_ADDRESS, write_buf,sizeof(write_buf),read_buf,sizeof(read_buf));
 
@@ -352,10 +355,12 @@ void Read_SHT31_Data(void)
     if(sensor_type == 2)
     {
         temperature_value_temp= (175.0*(float)t_sample/65535.0-45.0) - 7.5 ;  //如果是伟盛的19c传感器，这里修正5度
+        tem = temperature_value_temp;
     }	                  
 	else
     {
-        temperature_value_temp= (175.0*(float)t_sample/65535.0-45.0) - 2 ;  //结果偏大，这里做一下修正 
+        temperature_value_temp= (175.0*(float)t_sample/65535.0-45.0) - 2 ;  //结果偏大，这里做一下修正
+        tem = temperature_value_temp;
     }
 #else
     temperature_value_temp= (175.0*(float)t_sample/65535.0-45.0) - 5 ;  //结果偏大，这里做一下修正
@@ -379,15 +384,19 @@ void Read_SHT31_Data(void)
             temperature_value = 50;
         }
 
-        if((humidity_value_temp >= 0) && (humidity_value_temp <= 95))
+        //湿度修正：10^(7.5*(tem)/(tem+237.3))*hum/10^(7.5*(tem+(0.05*tem-9.5))/(tem+(0.05*tem-9.5)+237.3))
+
+        humidity_value_Fix = pow(10,(7.5*(tem)/(tem+237.3)))*humidity_value_temp/pow(10,(7.5*(tem+(0.05*tem-9.5))/(tem+(0.05*tem-9.5)+237.3)));
+
+        if((humidity_value_Fix >= 0) && (humidity_value_Fix <= 95))
         {
-            humidity_value = humidity_value_temp;
+            humidity_value = humidity_value_Fix;
         }
-        else if(humidity_value_temp < 0)
+        else if(humidity_value_Fix < 0)
         {
             humidity_value = 0;
         }
-        else if(humidity_value_temp > 95)
+        else if(humidity_value_Fix > 95)
         {
             humidity_value = 95;
         }
@@ -395,8 +404,14 @@ void Read_SHT31_Data(void)
         data_error_cnt = 0;
         Test.GetSht31Data = 1;
         
-        sprintf(debug,"Temperature: %.1f*C, Humidity: %.1f%%\r\n",temperature_value,humidity_value);
-        printf(debug);
+//        sprintf(debug,"Temperature: %.1f*C, Humidity: %.1f%%\r\n",temperature_value,humidity_value);
+        sprintf(debug,"Temperature: %.1f*C, Humidity: %.1f%%, Fix Humidity: %.1f%%\r\n",temperature_value,humidity_value_temp,humidity_value_Fix);
+        
+        print_cnt ++;
+        if(print_cnt % 5 == 0)
+        {
+            printf(debug);
+        }   
     }
     else
     {

@@ -17,7 +17,7 @@ unsigned char CheckModeCnt;		//模块开机后，等待主动上报内容，超�
 const unsigned char SoftwareBuilt[50] = {0};
 char Edition[50] = {0};
 
-char Edition_STD[50] = {"W686AIB_V1.0.2_T09"};				//程序的稳定版本，手动设置版本型号
+char Edition_STD[50] = {"W686AIB_V1.0.5"};				//程序的稳定版本，手动设置版本型号
 //char Edition_STD[50] = {"W686AIB_V0.0.1_T29_suzhou_IIJ"};
 char HardWare_Edition[50] = {"TY197_MAIN_V2.0"};		//硬件版本，手动设置版本型号
 
@@ -331,7 +331,7 @@ void Flag_Check(void)
 		memset(FsUpg.AppFilePath,0,sizeof(FsUpg.AppFilePath));
 		memset(FileMd5,0,sizeof(FileMd5));
 
-		strcpy(FsUpg.AppIpAdress,"http://stg-fota.mamosearch.com:80");			//正式服务器
+		strcpy(FsUpg.AppIpAdress,"http://fota.mamoair.net:80");			//正式服务器
 		strcpy(FsUpg.AppFilePath,"/fw/52-dfu-new.bin");
 		strcpy(FileMd5,"8d81d6a06350f2a991e2b187d094feb0");
 

@@ -643,7 +643,7 @@ void Bt_Handle(void)
 	{
 		u8 i = 0;
 		u16	data_temp = 0;
-		u8 imei_data[21] = {0x59,0x00,0x01,0x44};
+		u8 imei_data[21] = {0x59,0x10,0x00,0x44};
 
 		Flag.NeedSendImeiToBt = 0;
 
@@ -660,6 +660,7 @@ void Bt_Handle(void)
 
 		UART_Send(USART4,imei_data,sizeof(imei_data));
 
+		WaitBtCnt = 2;				//等待两秒再发送数传感器数据
 		return;
 	}
 
